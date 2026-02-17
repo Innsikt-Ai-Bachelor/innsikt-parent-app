@@ -1,11 +1,14 @@
 import { SphereBackground } from "@/components/ui/SphereBackground";
 import { api, SessionSummary } from "@/lib/api";
 import { router, useFocusEffect } from "expo-router";
+import { useColorScheme } from "nativewind";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HistoryScreen() {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme !== "light";
   const [items, setItems] = useState<SessionSummary[]>([]);
 
   const load = useCallback(async () => {
@@ -85,25 +88,50 @@ export default function HistoryScreen() {
   }, [items]);
 
   return (
-    <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
+    <SafeAreaView className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`} edges={["top"]}>
       <SphereBackground />
       <View className="px-4 pt-1 flex-row items-center">
         <Pressable onPress={handleBack} hitSlop={12} className="w-8">
-          <Text className="text-primary text-2xl font-extrabold">‹</Text>
+          <Text
+            className="text-2xl font-extrabold"
+            style={{ color: isDark ? "#6D7CFF" : "#4F5FE8" }}
+          >
+            ‹
+          </Text>
         </Pressable>
         <View className="flex-1 items-center">
-          <Text className="text-text font-extrabold">Progress</Text>
+          <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
+            Progress
+          </Text>
         </View>
         <View className="w-8" />
       </View>
-      <Text className="text-text text-3xl font-extrabold text-center px-4 mt-2">Progress</Text>
+      <Text
+        className="text-3xl font-extrabold text-center px-4 mt-2"
+        style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+      >
+        Progress
+      </Text>
       <View className="px-4 mt-4">
-        <View className="border border-orange-400/60 rounded-xl2 p-4 bg-card">
+        <View
+          className="border rounded-xl2 p-4"
+          style={{
+            borderColor: isDark ? "rgba(251,146,60,0.6)" : "rgba(221,123,32,0.5)",
+            backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+          }}
+        >
           <View className="flex-row items-center">
             <Text className="text-3xl">🔥</Text>
             <View className="ml-2">
-              <Text className="text-text text-3xl font-extrabold">{stats.currentStreak}</Text>
-              <Text className="text-muted text-xs -mt-1">Current streak</Text>
+              <Text
+                className="text-3xl font-extrabold"
+                style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+              >
+                {stats.currentStreak}
+              </Text>
+              <Text className="text-xs -mt-1" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>
+                Current streak
+              </Text>
             </View>
           </View>
           <Text className="text-emerald-300 font-extrabold mt-3">Amazing streak! 💪</Text>
@@ -112,36 +140,57 @@ export default function HistoryScreen() {
               <View
                 key={n}
                 className={`w-8 h-8 rounded-full items-center justify-center ${
-                  Number(n) <= stats.currentStreak ? "bg-orange-500" : "bg-white/10"
+                  Number(n) <= stats.currentStreak ? "bg-orange-500" : isDark ? "bg-white/10" : "bg-[#E4E8F3]"
                 }`}
               >
-                <Text className="text-white text-xs font-bold">{n}</Text>
+                <Text className={`text-xs font-bold ${Number(n) <= stats.currentStreak ? "text-white" : isDark ? "text-white" : "text-[#6B7285]"}`}>{n}</Text>
               </View>
             ))}
           </View>
         </View>
 
         <View className="mt-4 flex-row gap-3">
-          <View className="flex-1 border border-indigo-300/40 rounded-xl2 p-4 bg-card">
+          <View
+            className="flex-1 border rounded-xl2 p-4"
+            style={{
+              borderColor: isDark ? "rgba(165,180,252,0.4)" : "rgba(79,95,232,0.24)",
+              backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+            }}
+          >
             <Text className="text-2xl">🏆</Text>
-            <Text className="text-text text-4xl font-extrabold mt-1">{stats.longestStreak}</Text>
-            <Text className="text-muted mt-1">Longest Streak</Text>
+            <Text className="text-4xl font-extrabold mt-1" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.longestStreak}</Text>
+            <Text className="mt-1" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>Longest Streak</Text>
           </View>
-          <View className="flex-1 border border-indigo-300/40 rounded-xl2 p-4 bg-card">
+          <View
+            className="flex-1 border rounded-xl2 p-4"
+            style={{
+              borderColor: isDark ? "rgba(165,180,252,0.4)" : "rgba(79,95,232,0.24)",
+              backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+            }}
+          >
             <Text className="text-2xl">✓</Text>
-            <Text className="text-text text-4xl font-extrabold mt-1">{stats.total}</Text>
-            <Text className="text-muted mt-1">Total Sessions</Text>
+            <Text className="text-4xl font-extrabold mt-1" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.total}</Text>
+            <Text className="mt-1" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>Total Sessions</Text>
           </View>
         </View>
 
-        <View className="mt-4 border border-indigo-300/40 rounded-xl2 p-4 bg-card">
+        <View
+          className="mt-4 border rounded-xl2 p-4"
+          style={{
+            borderColor: isDark ? "rgba(165,180,252,0.4)" : "rgba(79,95,232,0.24)",
+            backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+          }}
+        >
           <View className="flex-row items-center justify-between">
-            <Text className="text-text font-semibold">📅 Weekly Goal</Text>
+            <Text className="font-semibold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>📅 Weekly Goal</Text>
             <Text className="text-cyan-300 font-extrabold">
               {stats.weekCount} / {stats.weeklyTarget}
             </Text>
           </View>
-          <View className="h-2 bg-white/10 rounded-full mt-3 overflow-hidden">
+          <View
+            className="h-2 rounded-full mt-3 overflow-hidden"
+            style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
+          >
             <View
               className="h-2 rounded-full bg-cyan-300"
               style={{ width: `${(stats.weekCount / stats.weeklyTarget) * 100}%` }}
@@ -149,35 +198,52 @@ export default function HistoryScreen() {
           </View>
         </View>
 
-        <View className="mt-4 border border-indigo-300/40 rounded-xl2 p-4 bg-card mb-8">
-          <Text className="text-text font-semibold">Average Scores (Last 3 Sessions)</Text>
+        <View
+          className="mt-4 border rounded-xl2 p-4 mb-8"
+          style={{
+            borderColor: isDark ? "rgba(165,180,252,0.4)" : "rgba(79,95,232,0.24)",
+            backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+          }}
+        >
+          <Text className="font-semibold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
+            Average Scores (Last 3 Sessions)
+          </Text>
 
           <View className="mt-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-text">Empathy</Text>
-              <Text className="text-text font-extrabold">{stats.empathy} / 10</Text>
+              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Empathy</Text>
+              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.empathy} / 10</Text>
             </View>
-            <View className="h-2 bg-white/10 rounded-full mt-1 overflow-hidden">
+            <View
+              className="h-2 rounded-full mt-1 overflow-hidden"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
+            >
               <View className="h-2 rounded-full bg-emerald-300" style={{ width: `${Number(stats.empathy) * 10}%` }} />
             </View>
           </View>
 
           <View className="mt-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-text">Boundaries</Text>
-              <Text className="text-text font-extrabold">{stats.boundaries} / 10</Text>
+              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Boundaries</Text>
+              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.boundaries} / 10</Text>
             </View>
-            <View className="h-2 bg-white/10 rounded-full mt-1 overflow-hidden">
+            <View
+              className="h-2 rounded-full mt-1 overflow-hidden"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
+            >
               <View className="h-2 rounded-full bg-indigo-300" style={{ width: `${Number(stats.boundaries) * 10}%` }} />
             </View>
           </View>
 
           <View className="mt-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-text">Consistency</Text>
-              <Text className="text-text font-extrabold">{stats.consistency} / 10</Text>
+              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Consistency</Text>
+              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.consistency} / 10</Text>
             </View>
-            <View className="h-2 bg-white/10 rounded-full mt-1 overflow-hidden">
+            <View
+              className="h-2 rounded-full mt-1 overflow-hidden"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
+            >
               <View className="h-2 rounded-full bg-lime-300" style={{ width: `${Number(stats.consistency) * 10}%` }} />
             </View>
           </View>

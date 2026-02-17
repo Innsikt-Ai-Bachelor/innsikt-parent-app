@@ -12,11 +12,13 @@ function Row({
   subtitle,
   right,
   onPress,
+  isDark,
 }: {
   title: string;
   subtitle?: string;
   right?: string;
   onPress?: () => void;
+  isDark: boolean;
 }) {
   return (
     <Pressable
@@ -24,10 +26,20 @@ function Row({
       className="min-h-14 px-3 py-2 flex-row items-center justify-between"
     >
       <View>
-        <Text className="text-text font-semibold">{title}</Text>
-        {subtitle ? <Text className="text-muted text-xs mt-1">{subtitle}</Text> : null}
+        <Text className="font-semibold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text className="text-xs mt-1" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
-      {right ? <Text className="text-primary font-bold">{right}</Text> : null}
+      {right ? (
+        <Text className="font-bold" style={{ color: isDark ? "#6D7CFF" : "#4F5FE8" }}>
+          {right}
+        </Text>
+      ) : null}
     </Pressable>
   );
 }
@@ -63,49 +75,82 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
+    <SafeAreaView className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`} edges={["top"]}>
       <SphereBackground />
       <View className="px-4 pt-1 flex-row items-center">
         <Pressable onPress={handleBack} hitSlop={12} className="w-8">
-          <Text className="text-primary text-2xl font-extrabold">‹</Text>
+          <Text
+            className="text-2xl font-extrabold"
+            style={{ color: isDark ? "#6D7CFF" : "#4F5FE8" }}
+          >
+            ‹
+          </Text>
         </Pressable>
         <View className="flex-1 items-center">
-          <Text className="text-text font-extrabold">Settings</Text>
+          <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
+            Settings
+          </Text>
         </View>
         <View className="w-8" />
       </View>
 
       <View className="px-4">
-        <Text className="text-text text-3xl font-extrabold text-center mt-2">Settings</Text>
-        <Text className="text-muted text-center mt-2">Customize your experience</Text>
+        <Text
+          className="text-3xl font-extrabold text-center mt-2"
+          style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+        >
+          Settings
+        </Text>
+        <Text className="text-center mt-2" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>
+          Customize your experience
+        </Text>
 
-        <View className="mt-5 bg-card border border-border rounded-xl2 py-2">
+        <View
+          className="mt-5 border rounded-xl2 py-2"
+          style={{
+            backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.18)",
+          }}
+        >
           <Row
             title="Appearance"
             subtitle={isDark ? "Dark mode active" : "Light mode active"}
             right={isDark ? "Dark" : "Light"}
             onPress={toggleTheme}
+            isDark={isDark}
           />
-          <View className="h-px bg-border mx-3" />
+          <View
+            className="h-px mx-3"
+            style={{ backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.16)" }}
+          />
           <Row
             title="Notifications"
             subtitle="Practice reminders"
             right={practiceReminders ? "On" : "Off"}
             onPress={() => setPracticeReminders((v) => !v)}
+            isDark={isDark}
           />
-          <View className="h-px bg-border mx-3" />
+          <View
+            className="h-px mx-3"
+            style={{ backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.16)" }}
+          />
           <Row
             title="Progress Updates"
             subtitle="Weekly progress notifications"
             right={progressUpdates ? "On" : "Off"}
             onPress={() => setProgressUpdates((v) => !v)}
+            isDark={isDark}
           />
-          <View className="h-px bg-border mx-3" />
+          <View
+            className="h-px mx-3"
+            style={{ backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.16)" }}
+          />
           <Row
             title="Language"
             subtitle="English"
             right="›"
             onPress={() => Alert.alert("Language", "Language settings coming soon.")}
+            isDark={isDark}
           />
         </View>
 
@@ -113,7 +158,12 @@ export default function SettingsScreen() {
           className="mt-5 border border-orange-400/50 rounded-xl2 py-3 items-center"
           onPress={handleLogout}
         >
-          <Text className="text-orange-300 font-extrabold">Log out</Text>
+          <Text
+            className="font-extrabold"
+            style={{ color: isDark ? "#F8B26A" : "#DD7B20" }}
+          >
+            Log out
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>

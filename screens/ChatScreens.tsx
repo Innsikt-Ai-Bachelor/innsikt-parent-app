@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useColorScheme } from "nativewind";
 import { useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -19,6 +20,8 @@ import { generateChildReply } from "@/lib/chatAgentMock";
 type ChatMessage = { id: string; role: "parent" | "child"; text: string };
 
 export default function ChatScreen() {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme !== "light";
   const params = useLocalSearchParams<{
     scenarioId?: string;
     title?: string;
@@ -93,21 +96,34 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-bg"
+      className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <SafeAreaView className="flex-1" edges={["top"]}>
         <SphereBackground />
         <View className="px-4 pt-1 pb-2 flex-row items-center">
           <Pressable onPress={handleBack} hitSlop={12} className="w-8">
-            <Text className="text-primary text-2xl font-extrabold">‹</Text>
+            <Text
+              className="text-2xl font-extrabold"
+              style={{ color: isDark ? "#6D7CFF" : "#4F5FE8" }}
+            >
+              ‹
+            </Text>
           </Pressable>
 
           <View className="flex-1 items-center px-4">
-            <Text className="text-text font-extrabold" numberOfLines={1}>
+            <Text
+              className="font-extrabold"
+              style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+              numberOfLines={1}
+            >
               {scenarioTitle}
             </Text>
-            <Text className="text-muted text-xs font-semibold" numberOfLines={1}>
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
+              numberOfLines={1}
+            >
               {scenarioDescription}
             </Text>
           </View>
@@ -116,10 +132,21 @@ export default function ChatScreen() {
         </View>
 
         <View className="px-4 pb-2">
-          <View className="h-2 rounded-full bg-white/10 overflow-hidden border border-border">
+          <View
+            className="h-2 rounded-full overflow-hidden border"
+            style={{
+              backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E8EBF5",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.2)",
+            }}
+          >
             <View className="h-full w-2/5 bg-primary rounded-full" />
           </View>
-          <Text className="text-muted text-xs font-bold mt-1">Conversation Mood</Text>
+          <Text
+            className="text-xs font-bold mt-1"
+            style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
+          >
+            Conversation Mood
+          </Text>
         </View>
 
         <FlatList
@@ -132,14 +159,21 @@ export default function ChatScreen() {
         />
 
         <View className="p-4 pt-2">
-          <View className="bg-card border border-border rounded-xl2 p-3">
+          <View
+            className="border rounded-xl2 p-3"
+            style={{
+              backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.20)",
+            }}
+          >
             <View className="flex-row items-end gap-2">
               <TextInput
                 value={input}
                 onChangeText={setInput}
                 placeholder="Type your response…"
-                placeholderTextColor="#9AA6C0"
-                className="flex-1 text-text font-semibold min-h-[36px]"
+                placeholderTextColor={isDark ? "#9AA6C0" : "#8B94A8"}
+                className="flex-1 font-semibold min-h-[36px]"
+                style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
                 multiline
               />
               <Pressable
