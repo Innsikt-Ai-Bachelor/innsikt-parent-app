@@ -1,4 +1,4 @@
-import type { ChatApiMessage } from "@/interfaces/types";
+/**import type { ChatApiMessage } from "@/interfaces/types";
 import { Platform } from "react-native";
 
 /**
@@ -7,7 +7,7 @@ import { Platform } from "react-native";
  * - Android Emulator: https://10.0.2.2:7143  (⚠️ emulatoren stoler normalt IKKE på dev-sertifikat)
  *   -> test helst i web/iOS-simulator når du bruker HTTPS dev-sertifikat.
  */
-const isAndroid = Platform.OS === "android";
+/**const isAndroid = Platform.OS === "android";
 const isWeb = Platform.OS === "web";
 
 export const BASE_URL = "https://innsikt-backend.fly.dev";

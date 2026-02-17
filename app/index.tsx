@@ -1,5 +1,5 @@
 import LoginScreen from "@/screens/LoginScreen";
 
-export default function LoginRoute() {
+export default function IndexRoute() {
   return <LoginScreen />;
 }

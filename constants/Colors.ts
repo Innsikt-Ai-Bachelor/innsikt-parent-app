@@ -1,3 +1,5 @@
+// Felles fargekonfigurasjon for light og dark mode
+
 const brand = {
   primary: '#7F8FE9',
   mint: '#77DCCA',

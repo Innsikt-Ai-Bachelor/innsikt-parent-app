@@ -1,61 +1,53 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api } from "@/lib/api";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { authenticateUser } from "../lib/chatApi";
-import styles from "../styles/LoginScreenStyle";
 
-type Props = { onSuccess?: () => void }; // <- gjort valgfri
+type Props = { onSuccess?: () => void };
 
 export default function LoginScreen({ onSuccess }: Props) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("test@demo.com");
+  const [password, setPassword] = useState("demo");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      const user = await authenticateUser(email, password);
-      const jsonValue =
-        typeof user === "object" ? JSON.stringify(user) : String(user);
-      await AsyncStorage.setItem("user", jsonValue);
-
-      if (typeof onSuccess === "function") {
+      await api.authenticate(email, password);
+      if (onSuccess) {
         onSuccess();
       } else {
-        // Ruteside uten props: naviger til hjem (bytt til din faktiske startside om nødvendig)
-        router.replace("/");
+        router.replace("/(tabs)");
       }
-    } catch (err) {
-      console.error("Login failed:", err);
-      setError("Login failed. Please check your credentials and try again.");
+    } catch {
+      setError("Login failed.");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.title}>Login</Text>
+    <View className="flex-1 bg-bg items-center justify-center px-6">
+      <View className="w-full max-w-md bg-card border border-border rounded-xl2 p-5">
+        <Text className="text-text text-2xl font-extrabold text-center">
+          Login
+        </Text>
 
-        {!!error && <Text style={styles.error}>{error}</Text>}
+        {!!error && <Text className="text-warning mt-3 text-center">{error}</Text>}
 
         <TextInput
-          style={styles.input}
+          className="mt-4 bg-black/20 border border-border rounded-xl px-4 py-3 text-text"
           placeholder="Email"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor="#9AA6C0"
           autoCapitalize="none"
-          keyboardType="email-address"
           value={email}
           onChangeText={(t) => {
             setEmail(t);
             if (error) setError("");
           }}
-          returnKeyType="next"
         />
 
         <TextInput
-          style={styles.input}
+          className="mt-3 bg-black/20 border border-border rounded-xl px-4 py-3 text-text"
           placeholder="Password"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor="#9AA6C0"
           secureTextEntry
           autoCapitalize="none"
           value={password}
@@ -63,12 +55,14 @@ export default function LoginScreen({ onSuccess }: Props) {
             setPassword(t);
             if (error) setError("");
           }}
-          returnKeyType="done"
           onSubmitEditing={handleLogin}
         />
 
-        <Pressable style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Logg inn</Text>
+        <Pressable
+          onPress={handleLogin}
+          className="mt-5 bg-primary rounded-xl py-3 items-center"
+        >
+          <Text className="text-white font-extrabold">Logg inn</Text>
         </Pressable>
       </View>
     </View>
