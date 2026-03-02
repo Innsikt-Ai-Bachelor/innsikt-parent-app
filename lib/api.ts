@@ -1,4 +1,4 @@
-import { getJson, setJson } from "./storage";
+import { getJson, setJson, removeKeys } from "./storage";
 
 export type User = { id: number; email: string; name: string };
 
@@ -13,9 +13,9 @@ export type Scenario = {
 
 export type SessionSummary = {
   sessionId: string;
-  scenarioId: number;
+  scenarioId?: number;
   title: string;
-  scenarioDescription: string;
+  scenarioDescription?: string;
   savedAt: string;
   lastMessagePreview: string;
   turnCount: number;
@@ -23,102 +23,118 @@ export type SessionSummary = {
 
 export type ChatMessage = { role: "parent" | "child"; text: string };
 
-function uuid() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+export type FeedbackResult = {
+  session_id: string;
+  total_score: number;
+  criteria: { name: string; score: number; max_score: number; reason: string }[];
+  feedback: string[];
+};
+
+const BASE_URL = "http://localhost:8000";
+
+async function getToken(): Promise<string | null> {
+  return getJson<string>("access_token");
 }
 
-// --- MOCK DATA ---
-const MOCK_SCENARIOS: Scenario[] = [
-  {
-    id: 1,
-    emoji: "🌙",
-    title: "Bedtime Resistance",
-    description: "Your child refuses to go to bed despite it being past bedtime",
-    durationMin: "5–10 min",
-    difficulty: "Moderate",
-  },
-  {
-    id: 2,
-    emoji: "📚",
-    title: "Homework Frustration",
-    description: "Your child is struggling with homework and getting upset",
-    durationMin: "10–15 min",
-    difficulty: "Challenging",
-  },
-  {
-    id: 3,
-    emoji: "🧸",
-    title: "Sharing Conflict",
-    description: "Your child does not want to share their toys with a sibling",
-    durationMin: "5–8 min",
-    difficulty: "Easy",
-  },
-  {
-    id: 4,
-    emoji: "⏰",
-    title: "Morning Rush",
-    description: "Your child is moving slowly and you need to leave soon",
-    durationMin: "8–12 min",
-    difficulty: "Moderate",
-  },
-];
+async function saveToken(token: string): Promise<void> {
+  await setJson("access_token", token);
+}
 
-// --- API (MOCK IMPLEMENTASJON) ---
+async function clearToken(): Promise<void> {
+  await removeKeys(["access_token", "user"]);
+}
+
+async function authHeaders(): Promise<{ Authorization: string }> {
+  const token = await getToken();
+  if (!token) throw new Error("Not authenticated");
+  return { Authorization: `Bearer ${token}` };
+}
+
 export const api = {
-  async authenticate(email: string, _password: string): Promise<User> {
-    // UI-only: “godta alt”
-    const user: User = { id: 1, email, name: "Parent" };
+  async authenticate(username: string, password: string): Promise<User> {
+    const res = await fetch(`${BASE_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) throw new Error("Invalid credentials");
+    const data = await res.json();
+    await saveToken(data.access_token);
+    const user: User = { id: 0, email: username, name: username };
     await setJson("user", user);
     return user;
   },
 
   async getScenarios(): Promise<Scenario[]> {
-    return MOCK_SCENARIOS;
+    const res = await fetch(`${BASE_URL}/scenarios`);
+    if (!res.ok) throw new Error("Failed to fetch scenarios");
+    return res.json();
   },
 
-  newSessionId(): string {
-    return uuid();
+  async newSessionId(scenarioId: number, title: string): Promise<string> {
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/chat/session`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ scenario_id: scenarioId, title }),
+    });
+    if (!res.ok) throw new Error("Failed to start session");
+    const data = await res.json();
+    return data.session_id;
   },
 
-  async saveConversation(sessionId: string, messages: ChatMessage[]) {
-    await setJson(`conversation:${sessionId}`, messages);
+  async sendMessage(sessionId: string, message: string): Promise<string> {
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/chat/message`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, message }),
+    });
+    if (!res.ok) throw new Error("Failed to send message");
+    const data = await res.json();
+    return data.assistant_message;
   },
 
-  async getConversation(sessionId: string): Promise<ChatMessage[]> {
-    return (await getJson<ChatMessage[]>(`conversation:${sessionId}`)) ?? [];
-  },
-
-  async upsertSessionSummary(summary: SessionSummary) {
-    const sessions = (await getJson<SessionSummary[]>("sessions")) ?? [];
-    const next = [summary, ...sessions.filter((s) => s.sessionId !== summary.sessionId)];
-    await setJson("sessions", next);
+  async generateFeedback(sessionId: string): Promise<FeedbackResult> {
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/chat/finish`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+    if (!res.ok) throw new Error("Failed to finish session");
+    const data: FeedbackResult = await res.json();
+    await setJson(`feedback:${sessionId}`, data);
+    return data;
   },
 
   async getSessions(): Promise<SessionSummary[]> {
-    return (await getJson<SessionSummary[]>("sessions")) ?? [];
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/chat/sessions`, { headers });
+    if (!res.ok) throw new Error("Failed to fetch sessions");
+    const data = await res.json();
+    return data.map((s: {
+      session_id: string;
+      scenario_id?: number;
+      title: string;
+      saved_at: string;
+      last_message_preview: string;
+      turn_count: number;
+    }) => ({
+      sessionId: s.session_id,
+      scenarioId: s.scenario_id,
+      title: s.title,
+      savedAt: s.saved_at,
+      lastMessagePreview: s.last_message_preview,
+      turnCount: s.turn_count,
+    }));
   },
 
-  async deleteSession(sessionId: string) {
-    const sessions = (await getJson<SessionSummary[]>("sessions")) ?? [];
-    await setJson("sessions", sessions.filter((s) => s.sessionId !== sessionId));
-    // conversation:<id> kan også slettes hvis du vil (valgfritt)
+  async deleteSession(_sessionId: string) {
+    // No backend endpoint available – no-op for now
   },
 
-  async generateFeedback(sessionId: string): Promise<string> {
-    const convo = await this.getConversation(sessionId);
-    const turns = convo.length;
-
-    // enkel, deterministisk “feedback”
-    return [
-      `Great work! Here's your session summary.`,
-      ``,
-      `Turns: ${turns}`,
-      `Strengths: You stayed engaged and kept the conversation moving.`,
-      `Growth: Try more validation before giving instructions.`,
-      ``,
-      `Example: "I see you're upset. Do you want a hug, or do you want to talk?"`,
-    ].join("\n");
+  async logout() {
+    await clearToken();
   },
 };

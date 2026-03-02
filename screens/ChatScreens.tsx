@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "nativewind";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -15,7 +15,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatBubble } from "@/components/ui/ChatBubble";
 import { SphereBackground } from "@/components/ui/SphereBackground";
 import { api } from "@/lib/api";
-import { generateChildReply } from "@/lib/chatAgentMock";
 
 type ChatMessage = { id: string; role: "parent" | "child"; text: string };
 
@@ -30,7 +29,8 @@ export default function ChatScreen() {
   const scenarioTitle = params.title ? String(params.title) : "Practice";
   const scenarioDescription = params.description ? String(params.description) : "";
   const scenarioId = params.scenarioId ? Number(params.scenarioId) : 1;
-  const sessionId = useMemo(() => api.newSessionId(), []);
+
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
 
@@ -40,7 +40,12 @@ export default function ChatScreen() {
 
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
+  useEffect(() => {
+    api.newSessionId(scenarioId, scenarioTitle).then(setSessionId).catch(console.error);
+  }, [scenarioId, scenarioTitle]);
+
   const send = async () => {
+    if (!sessionId) return;
     const text = input.trim();
     if (!text || isThinking) return;
 
@@ -50,11 +55,7 @@ export default function ChatScreen() {
     setMessages((prev) => [...prev, parentMsg]);
     setIsThinking(true);
 
-    const reply = await generateChildReply({
-      scenarioTitle,
-      scenarioDescription,
-      parentMessage: text,
-    });
+    const reply = await api.sendMessage(sessionId, text);
 
     const childMsg: ChatMessage = { id: `c-${Date.now()}`, role: "child", text: reply };
     setMessages((prev) => [...prev, childMsg]);
@@ -64,22 +65,8 @@ export default function ChatScreen() {
   };
 
   const endSession = async () => {
-    // lagre conversation
-    const convo = messages.map((m) => ({ role: m.role, text: m.text }));
-    await api.saveConversation(sessionId, convo);
-
-    // lagre session summary for History-tab
-    const last = messages[messages.length - 1]?.text ?? "";
-    await api.upsertSessionSummary({
-      sessionId,
-      scenarioId,
-      title: scenarioTitle,
-      scenarioDescription,
-      savedAt: new Date().toISOString(),
-      lastMessagePreview: last.slice(0, 80),
-      turnCount: messages.length,
-    });
-
+    if (!sessionId) return;
+    await api.generateFeedback(sessionId);
     router.push({
       pathname: "/feedback",
       params: { title: scenarioTitle, sessionId },

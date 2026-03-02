@@ -11,13 +11,13 @@ type Props = { onSuccess?: () => void };
 export default function LoginScreen({ onSuccess }: Props) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme !== "light";
-  const [email, setEmail] = useState("test@demo.com");
-  const [password, setPassword] = useState("demo");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      await api.authenticate(email, password);
+      await api.authenticate(username, password);
       if (onSuccess) {
         onSuccess();
       } else {
@@ -55,12 +55,12 @@ export default function LoginScreen({ onSuccess }: Props) {
               borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.18)",
               color: isDark ? "#EAF0FF" : "#1C2336",
             }}
-            placeholder="Email"
+            placeholder="Username"
             placeholderTextColor={isDark ? "#9AA6C0" : "#8B94A8"}
             autoCapitalize="none"
-            value={email}
+            value={username}
             onChangeText={(t) => {
-              setEmail(t);
+              setUsername(t);
               if (error) setError("");
             }}
           />

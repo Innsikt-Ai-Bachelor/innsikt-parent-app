@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme } from "nativewind";
 import { router } from "expo-router";
+import { api } from "@/lib/api";
 import { Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
@@ -58,7 +59,7 @@ export default function SettingsScreen() {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove(["user", "sessions"]);
+      await api.logout();
       router.replace("/login");
     } catch (err) {
       console.error("Logout failed:", err);

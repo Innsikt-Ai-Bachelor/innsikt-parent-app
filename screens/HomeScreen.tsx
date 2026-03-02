@@ -84,10 +84,10 @@ export default function HomeScreen() {
             <Text className="text-2xl">🔥</Text>
             <View className="ml-2">
               <Text className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}>
-                12 days
+                Progress
               </Text>
               <Text className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-xs`}>
-                Current streak
+                View your history
               </Text>
             </View>
           </View>
