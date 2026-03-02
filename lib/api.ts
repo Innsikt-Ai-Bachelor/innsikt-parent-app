@@ -30,7 +30,7 @@ export type FeedbackResult = {
   feedback: string[];
 };
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://10.47.37.38:8000";
 
 async function getToken(): Promise<string | null> {
   return getJson<string>("access_token");
