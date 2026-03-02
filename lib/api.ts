@@ -65,6 +65,15 @@ export const api = {
     return user;
   },
 
+  async register(username: string, password: string, email: string): Promise<void> {
+    const res = await fetch(`${BASE_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, email }),
+    });
+    if (!res.ok) throw new Error("Registration failed");
+  },
+
   async getScenarios(): Promise<Scenario[]> {
     const res = await fetch(`${BASE_URL}/scenarios`);
     if (!res.ok) throw new Error("Failed to fetch scenarios");
