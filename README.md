@@ -1,50 +1,192 @@
-# Welcome to your Expo app 👋
+# Innsikt Parent App (Frontend)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native/Expo app for foreldretrening med scenario-chat, feedback og progress.
 
-## Get started
+## Status nå
 
-1. Install dependencies
+- Frontend kjører i dag på **mock + AsyncStorage** (ingen backend nødvendig).
+- Hovedflyt: `Login -> Scenarios -> Chat -> Feedback -> Progress -> Settings/Logout`.
+- Data-lag er samlet i `lib/api.ts` + `lib/storage.ts`.
 
-   ```bash
-   npm install
-   ```
+## Arkitektur
 
-2. Start the app
+- `app/`: routes (Expo Router)
+- `screens/`: skjerm-UI
+- `components/`: gjenbrukbare UI-komponenter
+- `lib/`: data/mock/storage API
 
-   ```bash
-   npx expo start
-   ```
+## Krav
 
-In the output, you'll find options to open the app in a
+- Node.js 20 LTS eller nyere
+- npm 10+
+- Expo CLI via `npx expo ...`
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### iOS (kun macOS)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Xcode + iOS Simulator
 
-## Get a fresh project
+### Android (macOS/Windows)
 
-When you're ready, run:
+- Android Studio + emulator, eller fysisk mobil med Expo Go
+
+## Kom i gang (macOS og Windows)
+
+1. Installer dependencies:
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Synk Expo-pakker til riktig SDK-versjon:
 
-## Learn more
+```bash
+npx expo install --fix
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Start app med ren cache:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start -c
+```
 
-## Join the community
+4. Kjør app:
 
-Join our community of developers creating universal apps.
+- iOS simulator: trykk `i` i terminalen (macOS)
+- Android emulator: trykk `a`
+- Fysisk mobil: scan QR med Expo Go
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Vanlige problemer og raske løsninger
+
+### 1) Metro/Babel/NativeWind feil
+
+Kjør:
+
+```bash
+npx expo start -c
+```
+
+Hvis fortsatt feil:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+npx expo install --fix
+npx expo start -c
+```
+
+Windows (PowerShell):
+
+```powershell
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
+npm install
+npx expo install --fix
+npx expo start -c
+```
+
+### 2) iOS simulator timeout ved åpning
+
+macOS:
+
+```bash
+xcrun simctl shutdown all
+killall Simulator || true
+killall -9 com.apple.CoreSimulator.CoreSimulatorService || true
+npx expo start -c
+```
+
+### 3) Nettverksproblem mot localhost/LAN
+
+Start med tunnel:
+
+```bash
+npx expo start --tunnel
+```
+
+## Viktige filer for teamet
+
+- `lib/api.ts`: mock API (dagens sannhetskilde for frontend)
+- `lib/storage.ts`: AsyncStorage helpers
+- `screens/ChatScreens.tsx`: lagrer conversation + session summary
+- `screens/FeedbackScreen.tsx`: feedback-visning
+- `screens/HistoryScreen.tsx`: progress-over-tid dashboard
+- `screens/SettingsScreen.tsx`: theme-toggle + logout
+
+## Backend-kobling (anbefalt fremgangsmåte)
+
+Målet er å koble backend uten å ødelegge mock-flyt.
+
+### Steg 1: Behold `lib/api.ts` som eneste inngang
+
+Ikke kall backend direkte fra screens.  
+Screens skal kun bruke `api.*` fra `lib/api.ts`.
+
+### Steg 2: Legg inn et flagg for mock vs backend
+
+Anbefalt:
+
+- `EXPO_PUBLIC_USE_BACKEND=true/false`
+- `EXPO_PUBLIC_API_BASE_URL=https://...`
+
+Les env i `lib/api.ts` og ruter kall til:
+
+- mock-implementasjon (dagens)
+- backend-implementasjon (ny)
+
+### Steg 3: Implementer backend-funksjoner gradvis
+
+Start med:
+
+1. `authenticate`
+2. `getScenarios`
+3. `saveConversation` / `upsertSessionSummary` (om ønskelig server-side)
+4. `generateFeedback`
+5. `getSessions` (hvis historikk flyttes server-side)
+
+### Steg 4: Fallback-strategi
+
+Hvis backend feiler:
+
+- fallback til mock-data eller
+- vis tydelig feilmelding, men ikke krasj appen.
+
+## Miljøvariabler (forslag)
+
+Lag `.env` (ikke commit secrets):
+
+```env
+EXPO_PUBLIC_USE_BACKEND=false
+EXPO_PUBLIC_API_BASE_URL=https://innsikt-backend.fly.dev
+```
+
+## Test-sjekkliste for alle i gruppa
+
+Kjør denne etter pull:
+
+1. `npm install`
+2. `npx expo install --fix`
+3. `npx expo start -c`
+4. Verifiser flyt:
+   - Login
+   - Velg scenario
+   - Chat
+   - End Session
+   - Feedback
+   - Progress vises
+   - Settings virker (tema + logout)
+
+## Scripts
+
+- `npm run start` -> `expo start`
+- `npm run ios` -> start + åpne iOS
+- `npm run android` -> start + åpne Android
+- `npm run web` -> start web
+- `npm run lint` -> lint
+
+## Teknologistack
+
+- Expo SDK 54
+- React Native 0.81.5
+- Expo Router 6
+- NativeWind 4
+- AsyncStorage

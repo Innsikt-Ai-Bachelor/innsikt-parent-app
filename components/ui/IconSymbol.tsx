@@ -15,6 +15,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   // Historikk/History tab
   'clock.fill': 'history',
+  'gearshape.fill': 'settings',
 } as IconMapping;
 
 export function IconSymbol({

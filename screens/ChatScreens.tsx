@@ -1,0 +1,190 @@
+import { router, useLocalSearchParams } from "expo-router";
+import { useColorScheme } from "nativewind";
+import { useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { ChatBubble } from "@/components/ui/ChatBubble";
+import { SphereBackground } from "@/components/ui/SphereBackground";
+import { api } from "@/lib/api";
+
+type ChatMessage = { id: string; role: "parent" | "child"; text: string };
+
+export default function ChatScreen() {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme !== "light";
+  const params = useLocalSearchParams<{
+    scenarioId?: string;
+    title?: string;
+    description?: string;
+  }>();
+  const scenarioTitle = params.title ? String(params.title) : "Practice";
+  const scenarioDescription = params.description ? String(params.description) : "";
+  const scenarioId = params.scenarioId ? Number(params.scenarioId) : 1;
+
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: "m0", role: "child", text: "I don't want to go to bed!" },
+  ]);
+
+  const listRef = useRef<FlatList<ChatMessage>>(null);
+
+  useEffect(() => {
+    api.newSessionId(scenarioId, scenarioTitle).then(setSessionId).catch(console.error);
+  }, [scenarioId, scenarioTitle]);
+
+  const send = async () => {
+    if (!sessionId) return;
+    const text = input.trim();
+    if (!text || isThinking) return;
+
+    setInput("");
+
+    const parentMsg: ChatMessage = { id: `p-${Date.now()}`, role: "parent", text };
+    setMessages((prev) => [...prev, parentMsg]);
+    setIsThinking(true);
+
+    const reply = await api.sendMessage(sessionId, text);
+
+    const childMsg: ChatMessage = { id: `c-${Date.now()}`, role: "child", text: reply };
+    setMessages((prev) => [...prev, childMsg]);
+    setIsThinking(false);
+
+    requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+  };
+
+  const endSession = async () => {
+    if (!sessionId) return;
+    await api.generateFeedback(sessionId);
+    router.push({
+      pathname: "/feedback",
+      params: { title: scenarioTitle, sessionId },
+    });
+  };
+
+  const handleBack = () => {
+    if (typeof router.canGoBack === "function" && router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)");
+  };
+
+  return (
+    <KeyboardAvoidingView
+      className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <SafeAreaView className="flex-1" edges={["top"]}>
+        <SphereBackground />
+        <View className="px-4 pt-1 pb-2 flex-row items-center">
+          <Pressable onPress={handleBack} hitSlop={12} className="w-8">
+            <Text
+              className="text-2xl font-extrabold"
+              style={{ color: isDark ? "#6D7CFF" : "#4F5FE8" }}
+            >
+              ‹
+            </Text>
+          </Pressable>
+
+          <View className="flex-1 items-center px-4">
+            <Text
+              className="font-extrabold"
+              style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+              numberOfLines={1}
+            >
+              {scenarioTitle}
+            </Text>
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
+              numberOfLines={1}
+            >
+              {scenarioDescription}
+            </Text>
+          </View>
+
+          <View className="w-8" />
+        </View>
+
+        <View className="px-4 pb-2">
+          <View
+            className="h-2 rounded-full overflow-hidden border"
+            style={{
+              backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E8EBF5",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.2)",
+            }}
+          >
+            <View className="h-full w-2/5 bg-primary rounded-full" />
+          </View>
+          <Text
+            className="text-xs font-bold mt-1"
+            style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
+          >
+            Conversation Mood
+          </Text>
+        </View>
+
+        <FlatList
+          ref={listRef}
+          data={messages}
+          keyExtractor={(m) => m.id}
+          contentContainerClassName="px-4 pb-3"
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          renderItem={({ item }) => <ChatBubble role={item.role} text={item.text} />}
+        />
+
+        <View className="p-4 pt-2">
+          <View
+            className="border rounded-xl2 p-3"
+            style={{
+              backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.20)",
+            }}
+          >
+            <View className="flex-row items-end gap-2">
+              <TextInput
+                value={input}
+                onChangeText={setInput}
+                placeholder="Type your response…"
+                placeholderTextColor={isDark ? "#9AA6C0" : "#8B94A8"}
+                className="flex-1 font-semibold min-h-[36px]"
+                style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+                multiline
+              />
+              <Pressable
+                onPress={send}
+                className={`w-10 h-10 rounded-xl items-center justify-center ${
+                  input.trim() ? "bg-primary" : "bg-primarySoft"
+                }`}
+              >
+                <Text className="text-white font-extrabold">➤</Text>
+              </Pressable>
+            </View>
+
+            <Pressable onPress={endSession} className="mt-3 items-center">
+              <Text className="text-primary font-extrabold text-xs">
+                End Session & View Feedback
+              </Text>
+            </Pressable>
+
+            {isThinking ? (
+              <Text className="text-muted text-xs mt-2">Child is responding…</Text>
+            ) : null}
+          </View>
+        </View>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
+  );
+}

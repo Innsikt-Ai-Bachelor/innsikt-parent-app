@@ -1,28 +1,36 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
+import "../global.css";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Stack } from "expo-router";
+import { useColorScheme } from "nativewind";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const { setColorScheme } = useColorScheme();
+  const [themeReady, setThemeReady] = useState(false);
 
-  if (!loaded) {
-      return null;
+  useEffect(() => {
+    AsyncStorage.getItem("theme")
+      .then((saved) => {
+        if (saved === "light" || saved === "dark") {
+          setColorScheme(saved);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setThemeReady(true));
+  }, [setColorScheme]);
+
+  if (!themeReady) {
+    return <View className="flex-1 bg-bg" />;
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ header: () => null }} />
+      <Stack.Screen name="login" options={{ header: () => null }} />
+      <Stack.Screen name="chatbot" options={{ header: () => null }} />
+      <Stack.Screen name="feedback" options={{ header: () => null }} />
+      <Stack.Screen name="index" options={{ header: () => null }} />
+    </Stack>
   );
 }
