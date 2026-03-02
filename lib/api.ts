@@ -1,4 +1,5 @@
-import { getJson, setJson, removeKeys } from "./storage";
+import { getJson, removeKeys, setJson } from "./storage";
+import { Platform } from "react-native";
 
 export type User = { id: number; email: string; name: string };
 
@@ -26,11 +27,18 @@ export type ChatMessage = { role: "parent" | "child"; text: string };
 export type FeedbackResult = {
   session_id: string;
   total_score: number;
-  criteria: { name: string; score: number; max_score: number; reason: string }[];
+  criteria: {
+    name: string;
+    score: number;
+    max_score: number;
+    reason: string;
+  }[];
   feedback: string[];
 };
 
-const BASE_URL = "http://10.47.37.38:8000";
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ??
+  (Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000");
 
 async function getToken(): Promise<string | null> {
   return getJson<string>("access_token");
@@ -65,7 +73,11 @@ export const api = {
     return user;
   },
 
-  async register(username: string, password: string, email: string): Promise<void> {
+  async register(
+    username: string,
+    password: string,
+    email: string,
+  ): Promise<void> {
     const res = await fetch(`${BASE_URL}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -122,21 +134,23 @@ export const api = {
     const res = await fetch(`${BASE_URL}/chat/sessions`, { headers });
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const data = await res.json();
-    return data.map((s: {
-      session_id: string;
-      scenario_id?: number;
-      title: string;
-      saved_at: string;
-      last_message_preview: string;
-      turn_count: number;
-    }) => ({
-      sessionId: s.session_id,
-      scenarioId: s.scenario_id,
-      title: s.title,
-      savedAt: s.saved_at,
-      lastMessagePreview: s.last_message_preview,
-      turnCount: s.turn_count,
-    }));
+    return data.map(
+      (s: {
+        session_id: string;
+        scenario_id?: number;
+        title: string;
+        saved_at: string;
+        last_message_preview: string;
+        turn_count: number;
+      }) => ({
+        sessionId: s.session_id,
+        scenarioId: s.scenario_id,
+        title: s.title,
+        savedAt: s.saved_at,
+        lastMessagePreview: s.last_message_preview,
+        turnCount: s.turn_count,
+      }),
+    );
   },
 
   async deleteSession(_sessionId: string) {
