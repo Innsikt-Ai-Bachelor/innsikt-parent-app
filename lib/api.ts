@@ -1,5 +1,5 @@
-import { getJson, removeKeys, setJson } from "./storage";
 import { Platform } from "react-native";
+import { getJson, removeKeys, setJson } from "./storage";
 
 export type User = { id: number; email: string; name: string };
 
@@ -38,7 +38,9 @@ export type FeedbackResult = {
 
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000");
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:8000"
+    : "http://localhost:8000");
 
 async function getToken(): Promise<string | null> {
   return getJson<string>("access_token");
@@ -87,8 +89,13 @@ export const api = {
   },
 
   async getScenarios(): Promise<Scenario[]> {
-    const res = await fetch(`${BASE_URL}/scenarios`);
-    if (!res.ok) throw new Error("Failed to fetch scenarios");
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/scenarios/`, { headers });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Failed to fetch scenarios (${res.status}): ${txt}`);
+    }
     return res.json();
   },
 
