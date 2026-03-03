@@ -118,7 +118,14 @@ export const api = {
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, message }),
     });
-    if (!res.ok) throw new Error("Failed to send message");
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      console.log("chat/message status", res.status);
+      console.log("chat/message body", txt);
+      throw new Error(`Failed to send message (${res.status}): ${txt}`);
+    }
+
     const data = await res.json();
     return data.assistant_message;
   },
