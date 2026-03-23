@@ -74,7 +74,8 @@ export default function ChatScreen() {
         pathname: "/feedback",
         params: { title: scenarioTitle, sessionId },
       });
-    } finally {
+    } catch (error) {
+      console.error(error);
       setIsEnding(false);
     }
   };
