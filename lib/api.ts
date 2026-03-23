@@ -16,10 +16,17 @@ export type SessionSummary = {
   sessionId: string;
   scenarioId?: number;
   title: string;
-  scenarioDescription?: string;
   savedAt: string;
-  lastMessagePreview: string;
-  turnCount: number;
+  totalScore?: number;
+};
+
+export type SessionDetail = {
+  sessionId: string;
+  scenarioId?: number;
+  title: string;
+  savedAt: string;
+  messages: { role: string; content: string }[];
+  feedback?: FeedbackResult;
 };
 
 export type ChatMessage = { role: "parent" | "child"; text: string };
@@ -154,18 +161,31 @@ export const api = {
         session_id: string;
         scenario_id?: number;
         title: string;
-        saved_at: string;
-        last_message_preview: string;
-        turn_count: number;
+        created_at: string;
+        total_score?: number;
       }) => ({
         sessionId: s.session_id,
         scenarioId: s.scenario_id,
         title: s.title,
-        savedAt: s.saved_at,
-        lastMessagePreview: s.last_message_preview,
-        turnCount: s.turn_count,
+        savedAt: s.created_at,
+        totalScore: s.total_score,
       }),
     );
+  },
+
+  async getSessionDetail(sessionId: string): Promise<SessionDetail> {
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, { headers });
+    if (!res.ok) throw new Error("Failed to fetch session detail");
+    const s = await res.json();
+    return {
+      sessionId: s.session_id,
+      scenarioId: s.scenario_id,
+      title: s.title,
+      savedAt: s.created_at,
+      messages: s.messages,
+      feedback: s.feedback,
+    };
   },
 
   async deleteSession(_sessionId: string) {

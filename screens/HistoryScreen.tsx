@@ -3,7 +3,7 @@ import { api, SessionSummary } from "@/lib/api";
 import { router, useFocusEffect } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HistoryScreen() {
@@ -67,13 +67,10 @@ export default function HistoryScreen() {
     const weekCount = sessions.filter((s) => new Date(s.savedAt) >= weekAgo).length;
     const weeklyTarget = 3;
 
-    const last3 = sessions.slice(0, 3);
-    const avgTurns = last3.length
-      ? last3.reduce((sum, s) => sum + s.turnCount, 0) / last3.length
-      : 0;
-    const empathy = Math.min(10, Math.max(6, 6.4 + avgTurns * 0.14));
-    const boundaries = Math.min(10, Math.max(6, 6.2 + avgTurns * 0.16));
-    const consistency = Math.min(10, Math.max(6, 6.0 + avgTurns * 0.12));
+    const last3 = sessions.slice(0, 3).filter((s) => s.totalScore !== undefined);
+    const avgScore = last3.length
+      ? last3.reduce((sum, s) => sum + (s.totalScore ?? 0), 0) / last3.length
+      : null;
 
     return {
       currentStreak: Math.max(1, Math.min(30, longestStreak || 1)),
@@ -81,9 +78,7 @@ export default function HistoryScreen() {
       total,
       weekCount: Math.min(weeklyTarget, weekCount),
       weeklyTarget,
-      empathy: empathy.toFixed(1),
-      boundaries: boundaries.toFixed(1),
-      consistency: consistency.toFixed(1),
+      avgScore,
     };
   }, [items]);
 
@@ -106,13 +101,14 @@ export default function HistoryScreen() {
         </View>
         <View className="w-8" />
       </View>
+      <ScrollView className="flex-1" contentContainerClassName="px-4 mt-2 pb-8">
       <Text
-        className="text-3xl font-extrabold text-center px-4 mt-2"
+        className="text-3xl font-extrabold text-center mt-2"
         style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
       >
         Progress
       </Text>
-      <View className="px-4 mt-4">
+      <View className="mt-4">
         <View
           className="border rounded-xl2 p-4"
           style={{
@@ -206,49 +202,63 @@ export default function HistoryScreen() {
           }}
         >
           <Text className="font-semibold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
-            Average Scores (Last 3 Sessions)
+            Average Score (Last 3 Sessions)
           </Text>
 
           <View className="mt-3">
             <View className="flex-row items-center justify-between">
-              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Empathy</Text>
-              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.empathy} / 10</Text>
+              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Total Score</Text>
+              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
+                {stats.avgScore !== null ? `${Math.round(stats.avgScore)} / 100` : "—"}
+              </Text>
             </View>
             <View
               className="h-2 rounded-full mt-1 overflow-hidden"
               style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
             >
-              <View className="h-2 rounded-full bg-emerald-300" style={{ width: `${Number(stats.empathy) * 10}%` }} />
-            </View>
-          </View>
-
-          <View className="mt-3">
-            <View className="flex-row items-center justify-between">
-              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Boundaries</Text>
-              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.boundaries} / 10</Text>
-            </View>
-            <View
-              className="h-2 rounded-full mt-1 overflow-hidden"
-              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
-            >
-              <View className="h-2 rounded-full bg-indigo-300" style={{ width: `${Number(stats.boundaries) * 10}%` }} />
-            </View>
-          </View>
-
-          <View className="mt-3">
-            <View className="flex-row items-center justify-between">
-              <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>Consistency</Text>
-              <Text className="font-extrabold" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>{stats.consistency} / 10</Text>
-            </View>
-            <View
-              className="h-2 rounded-full mt-1 overflow-hidden"
-              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E4E8F3" }}
-            >
-              <View className="h-2 rounded-full bg-lime-300" style={{ width: `${Number(stats.consistency) * 10}%` }} />
+              <View
+                className="h-2 rounded-full bg-emerald-300"
+                style={{ width: `${stats.avgScore ?? 0}%` }}
+              />
             </View>
           </View>
         </View>
+
+        <View className="mt-4 mb-8">
+          <Text className="font-extrabold text-base mb-2" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
+            Session History
+          </Text>
+          {items.length === 0 && (
+            <Text style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>No sessions yet.</Text>
+          )}
+          {items.map((s) => (
+            <Pressable
+              key={s.sessionId}
+              onPress={() => router.push({ pathname: "/feedback", params: { title: s.title, sessionId: s.sessionId } })}
+              className="border rounded-xl p-3 mb-2"
+              style={{
+                borderColor: isDark ? "rgba(165,180,252,0.4)" : "rgba(79,95,232,0.24)",
+                backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
+              }}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="font-semibold flex-1 mr-2" style={{ color: isDark ? "#EAF0FF" : "#1C2336" }} numberOfLines={1}>
+                  {s.title}
+                </Text>
+                {s.totalScore !== undefined && (
+                  <Text className="font-extrabold" style={{ color: isDark ? "#6D7CFF" : "#4F5FE8" }}>
+                    {s.totalScore} / 100
+                  </Text>
+                )}
+              </View>
+              <Text className="text-xs mt-1" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>
+                {new Date(s.savedAt).toLocaleDateString()}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
