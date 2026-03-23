@@ -1,7 +1,19 @@
 import { Platform } from "react-native";
 import { getJson, removeKeys, setJson } from "./storage";
 
-export type User = { id: number; email: string; name: string };
+export type User = {
+  id: number;
+  email: string;
+  name: string;
+  username?: string;
+};
+
+export type UpdateUserProfilePayload = {
+  username: string;
+  fullName: string;
+  email: string;
+  password?: string;
+};
 
 export type Scenario = {
   id: number;
@@ -40,7 +52,7 @@ export type FeedbackResult = {
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ??
   (Platform.OS === "android"
-    ? "http://10.0.2.2:8000"
+    ? "http://34.204.44.206:8000"
     : "http://localhost:8000");
 
 async function getToken(): Promise<string | null> {
@@ -61,6 +73,23 @@ async function authHeaders(): Promise<{ Authorization: string }> {
   return { Authorization: `Bearer ${token}` };
 }
 
+function mapApiUser(data: unknown, fallback: Partial<User> = {}): User {
+  const value = (data ?? {}) as Record<string, unknown>;
+  return {
+    id: typeof value.id === "number" ? value.id : (fallback.id ?? 0),
+    username:
+      typeof value.username === "string" ? value.username : fallback.username,
+    name:
+      typeof value.full_name === "string"
+        ? value.full_name
+        : typeof value.name === "string"
+          ? value.name
+          : (fallback.name ?? ""),
+    email:
+      typeof value.email === "string" ? value.email : (fallback.email ?? ""),
+  };
+}
+
 export const api = {
   async authenticate(username: string, password: string): Promise<User> {
     const res = await fetch(`${BASE_URL}/login`, {
@@ -71,7 +100,12 @@ export const api = {
     if (!res.ok) throw new Error("Invalid credentials");
     const data = await res.json();
     await saveToken(data.access_token);
-    const user: User = { id: 0, email: username, name: username };
+    const user = mapApiUser(data.user ?? data, {
+      id: 0,
+      username,
+      name: username,
+      email: username,
+    });
     await setJson("user", user);
     return user;
   },
@@ -87,6 +121,41 @@ export const api = {
       body: JSON.stringify({ username, password, email }),
     });
     if (!res.ok) throw new Error("Registration failed");
+  },
+
+  async getCurrentUser(): Promise<User | null> {
+    return getJson<User>("user");
+  },
+
+  async updateUserProfile(payload: UpdateUserProfilePayload): Promise<User> {
+    const headers = await authHeaders();
+    const res = await fetch(
+      `${BASE_URL}/users/${encodeURIComponent(payload.username)}`,
+      {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: payload.email,
+          full_name: payload.fullName,
+          ...(payload.password ? { password: payload.password } : {}),
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Failed to update profile (${res.status}): ${txt}`);
+    }
+
+    const data = await res.json().catch(() => ({}));
+    const user = mapApiUser(data, {
+      id: 0,
+      username: payload.username,
+      name: payload.fullName,
+      email: payload.email,
+    });
+    await setJson("user", user);
+    return user;
   },
 
   async getScenarios(): Promise<Scenario[]> {
