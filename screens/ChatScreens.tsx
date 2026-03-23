@@ -33,6 +33,7 @@ export default function ChatScreen() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: "m0", role: "child", text: "I don't want to go to bed!" },
@@ -65,12 +66,18 @@ export default function ChatScreen() {
   };
 
   const endSession = async () => {
-    if (!sessionId) return;
-    await api.generateFeedback(sessionId);
-    router.push({
-      pathname: "/feedback",
-      params: { title: scenarioTitle, sessionId },
-    });
+    if (!sessionId || isEnding) return;
+    setIsEnding(true);
+    try {
+      await api.generateFeedback(sessionId);
+      router.push({
+        pathname: "/feedback",
+        params: { title: scenarioTitle, sessionId },
+      });
+    } catch (error) {
+      console.error(error);
+      setIsEnding(false);
+    }
   };
 
   const handleBack = () => {
@@ -173,9 +180,9 @@ export default function ChatScreen() {
               </Pressable>
             </View>
 
-            <Pressable onPress={endSession} className="mt-3 items-center">
+            <Pressable onPress={endSession} disabled={isEnding} className="mt-3 items-center">
               <Text className="text-primary font-extrabold text-xs">
-                End Session & View Feedback
+                {isEnding ? "Generating feedback…" : "End Session & View Feedback"}
               </Text>
             </Pressable>
 

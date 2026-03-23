@@ -98,13 +98,27 @@ export default function FeedbackScreen() {
               )}
             </View>
 
-            {feedback && feedback.feedback.length > 0 && (
+            {feedback && feedback.positive_feedback.length > 0 && (
               <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
                 <Text className="text-text font-extrabold text-base">What Went Well</Text>
                 <View className="mt-2 gap-2">
-                  {feedback.feedback.map((line, i) => (
+                  {feedback.positive_feedback.map((line, i) => (
                     <View key={i} className="flex-row gap-2">
                       <Text className="text-primary">•</Text>
+                      <Text className="text-muted flex-1 leading-6">{line}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {feedback && feedback.negative_feedback.length > 0 && (
+              <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
+                <Text className="text-text font-extrabold text-base">What to Improve</Text>
+                <View className="mt-2 gap-2">
+                  {feedback.negative_feedback.map((line, i) => (
+                    <View key={i} className="flex-row gap-2">
+                      <Text className="text-red-400">•</Text>
                       <Text className="text-muted flex-1 leading-6">{line}</Text>
                     </View>
                   ))}
