@@ -33,7 +33,8 @@ export type FeedbackResult = {
     max_score: number;
     reason: string;
   }[];
-  feedback: string[];
+  positive_feedback: string[];
+  negative_feedback: string[];
 };
 
 const BASE_URL =
