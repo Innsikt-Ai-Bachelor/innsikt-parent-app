@@ -27,7 +27,9 @@ export default function ChatScreen() {
     description?: string;
   }>();
   const scenarioTitle = params.title ? String(params.title) : "Practice";
-  const scenarioDescription = params.description ? String(params.description) : "";
+  const scenarioDescription = params.description
+    ? String(params.description)
+    : "";
   const scenarioId = params.scenarioId ? Number(params.scenarioId) : 1;
 
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -35,14 +37,15 @@ export default function ChatScreen() {
   const [isThinking, setIsThinking] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "m0", role: "child", text: "I don't want to go to bed!" },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   useEffect(() => {
-    api.newSessionId(scenarioId, scenarioTitle).then(setSessionId).catch(console.error);
+    api
+      .newSessionId(scenarioId, scenarioTitle)
+      .then(setSessionId)
+      .catch(console.error);
   }, [scenarioId, scenarioTitle]);
 
   const send = async () => {
@@ -52,17 +55,27 @@ export default function ChatScreen() {
 
     setInput("");
 
-    const parentMsg: ChatMessage = { id: `p-${Date.now()}`, role: "parent", text };
+    const parentMsg: ChatMessage = {
+      id: `p-${Date.now()}`,
+      role: "parent",
+      text,
+    };
     setMessages((prev) => [...prev, parentMsg]);
     setIsThinking(true);
 
     const reply = await api.sendMessage(sessionId, text);
 
-    const childMsg: ChatMessage = { id: `c-${Date.now()}`, role: "child", text: reply };
+    const childMsg: ChatMessage = {
+      id: `c-${Date.now()}`,
+      role: "child",
+      text: reply,
+    };
     setMessages((prev) => [...prev, childMsg]);
     setIsThinking(false);
 
-    requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+    requestAnimationFrame(() =>
+      listRef.current?.scrollToEnd({ animated: true }),
+    );
   };
 
   const endSession = async () => {
@@ -125,31 +138,17 @@ export default function ChatScreen() {
           <View className="w-8" />
         </View>
 
-        <View className="px-4 pb-2">
-          <View
-            className="h-2 rounded-full overflow-hidden border"
-            style={{
-              backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "#E8EBF5",
-              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.2)",
-            }}
-          >
-            <View className="h-full w-2/5 bg-primary rounded-full" />
-          </View>
-          <Text
-            className="text-xs font-bold mt-1"
-            style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
-          >
-            Conversation Mood
-          </Text>
-        </View>
-
         <FlatList
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
           contentContainerClassName="px-4 pb-3"
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-          renderItem={({ item }) => <ChatBubble role={item.role} text={item.text} />}
+          onContentSizeChange={() =>
+            listRef.current?.scrollToEnd({ animated: true })
+          }
+          renderItem={({ item }) => (
+            <ChatBubble role={item.role} text={item.text} />
+          )}
         />
 
         <View className="p-4 pt-2">
@@ -157,7 +156,9 @@ export default function ChatScreen() {
             className="border rounded-xl2 p-3"
             style={{
               backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
-              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.20)",
+              borderColor: isDark
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(79,95,232,0.20)",
             }}
           >
             <View className="flex-row items-end gap-2">
@@ -180,14 +181,22 @@ export default function ChatScreen() {
               </Pressable>
             </View>
 
-            <Pressable onPress={endSession} disabled={isEnding} className="mt-3 items-center">
+            <Pressable
+              onPress={endSession}
+              disabled={isEnding}
+              className="mt-3 items-center"
+            >
               <Text className="text-primary font-extrabold text-xs">
-                {isEnding ? "Generating feedback…" : "End Session & View Feedback"}
+                {isEnding
+                  ? "Generating feedback…"
+                  : "End Session & View Feedback"}
               </Text>
             </Pressable>
 
             {isThinking ? (
-              <Text className="text-muted text-xs mt-2">Child is responding…</Text>
+              <Text className="text-muted text-xs mt-2">
+                Child is responding…
+              </Text>
             ) : null}
           </View>
         </View>
