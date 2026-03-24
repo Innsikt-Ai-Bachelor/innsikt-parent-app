@@ -72,7 +72,7 @@ function resolveBaseUrl(): string {
     : "http://localhost:8000";
 }
 
-const BASE_URL = "http://10.0.2.2:8000"; // resolveBaseUrl();
+const BASE_URL = resolveBaseUrl();
 
 const REQUEST_TIMEOUT_MS = 25000;
 
@@ -120,6 +120,13 @@ async function forceLogoutToLogin(): Promise<void> {
   }
 }
 
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Økten er utløpt. Vennligst logg inn igjen.");
+    this.name = "UnauthorizedError";
+  }
+}
+
 function isUnauthorizedStatus(status: number): boolean {
   return status === 401 || status === 403;
 }
@@ -127,7 +134,7 @@ function isUnauthorizedStatus(status: number): boolean {
 async function handleUnauthorizedResponse(res: Response): Promise<void> {
   if (!isUnauthorizedStatus(res.status)) return;
   await forceLogoutToLogin();
-  throw new Error("Unauthorized");
+  throw new UnauthorizedError();
 }
 
 async function authHeaders(): Promise<{ Authorization: string }> {
@@ -205,7 +212,23 @@ export const api = {
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      throw new Error(txt || "Feil brukernavn eller passord.");
+      let message = "Feil brukernavn eller passord.";
+
+      if (res.status >= 500) {
+        message =
+          "Innlogging feilet på grunn av en serverfeil. Prøv igjen senere.";
+      } else if (res.status === 429) {
+        message = "For mange innloggingsforsøk. Vent litt før du prøver igjen.";
+      } else if (res.status !== 400 && res.status !== 401) {
+        // Unexpected 4xx (e.g. 403, 404) – default covers 400/401 (wrong credentials)
+        message = "Innlogging feilet. Vennligst prøv igjen.";
+      }
+
+      if (txt) {
+        console.warn("Login request failed:", res.status, txt);
+      }
+
+      throw new Error(message);
     }
 
     const data = await res.json().catch(() => ({}));
@@ -229,10 +252,27 @@ export const api = {
     password: string,
     email: string,
   ): Promise<void> {
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedUsername || !trimmedPassword || !trimmedEmail) {
+      throw new Error("Fyll inn brukernavn, passord og e-post.");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      throw new Error("Ugyldig e-postadresse.");
+    }
+
     const res = await fetchWithTimeout(`${BASE_URL}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, email }),
+      body: JSON.stringify({
+        username: trimmedUsername,
+        password: trimmedPassword,
+        email: trimmedEmail,
+      }),
     });
 
     if (!res.ok) {

@@ -63,19 +63,24 @@ export default function ChatScreen() {
     setMessages((prev) => [...prev, parentMsg]);
     setIsThinking(true);
 
-    const reply = await api.sendMessage(sessionId, text);
+    try {
+      const reply = await api.sendMessage(sessionId, text);
 
-    const childMsg: ChatMessage = {
-      id: `c-${Date.now()}`,
-      role: "child",
-      text: reply,
-    };
-    setMessages((prev) => [...prev, childMsg]);
-    setIsThinking(false);
+      const childMsg: ChatMessage = {
+        id: `c-${Date.now()}`,
+        role: "child",
+        text: reply,
+      };
+      setMessages((prev) => [...prev, childMsg]);
 
-    requestAnimationFrame(() =>
-      listRef.current?.scrollToEnd({ animated: true }),
-    );
+      requestAnimationFrame(() =>
+        listRef.current?.scrollToEnd({ animated: true }),
+      );
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   const endSession = async () => {
