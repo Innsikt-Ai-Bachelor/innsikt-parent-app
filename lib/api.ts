@@ -1,4 +1,3 @@
-import Constants from "expo-constants";
 import { router } from "expo-router";
 import { Platform } from "react-native";
 import { getJson, removeKeys, setJson } from "./storage";
@@ -59,27 +58,11 @@ export type FeedbackResult = {
   negative_feedback: string[];
 };
 
-function resolveBaseUrl(): string {
-  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
-  if (envUrl) {
-    return envUrl;
-  }
-
-  const hostUri =
-    Constants.expoConfig?.hostUri ??
-    (Constants as { manifest?: { debuggerHost?: string } }).manifest
-      ?.debuggerHost;
-  const host = hostUri?.split(":")[0];
-  if (host) {
-    return `http://${host}:8000`;
-  }
-
-  return Platform.OS === "android"
-    ? "http://10.0.2.2:8000"
-    : "http://localhost:8000";
-}
-
-const BASE_URL = resolveBaseUrl();
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ??
+  (Platform.OS === "android"
+    ? "http://34.204.44.206:8000"
+    : "http://localhost:8000");
 
 const REQUEST_TIMEOUT_MS = 25000;
 
@@ -432,7 +415,9 @@ export const api = {
 
   async getSessionDetail(sessionId: string): Promise<SessionDetail> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, { headers });
+    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, {
+      headers,
+    });
     if (!res.ok) throw new Error("Failed to fetch session detail");
     const s = await res.json();
     return {
