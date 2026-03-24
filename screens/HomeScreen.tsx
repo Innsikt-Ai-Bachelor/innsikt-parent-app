@@ -1,8 +1,8 @@
 import { ScenarioCard } from "@/components/ui/ScenarioCard";
 import { SphereBackground } from "@/components/ui/SphereBackground";
 import { api, Scenario } from "@/lib/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
@@ -25,22 +25,33 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`} edges={["top"]}>
+    <SafeAreaView
+      className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`}
+      edges={["top"]}
+    >
       <SphereBackground />
       <View className="px-4 pt-1">
         <View className="h-11 flex-row items-center justify-between">
-          <Pressable hitSlop={10} onPress={() => router.push("/(tabs)/settings")}>
+          <Pressable
+            hitSlop={10}
+            onPress={() => router.push("/(tabs)/settings")}
+          >
             <Ionicons
               name="menu-outline"
               size={24}
               color={isDark ? "#6D7CFF" : "#4F5FE8"}
             />
           </Pressable>
-          <Text className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}>
+          <Text
+            className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}
+          >
             Scenarios
           </Text>
           <View className="flex-row items-center gap-3">
-            <Pressable hitSlop={10} onPress={() => router.push("/(tabs)/history")}>
+            <Pressable
+              hitSlop={10}
+              onPress={() => router.push("/(tabs)/history")}
+            >
               <Ionicons
                 name={isDark ? "stats-chart" : "stats-chart-outline"}
                 size={20}
@@ -70,28 +81,38 @@ export default function HomeScreen() {
         >
           Practice Makes Progress
         </Text>
-        <Text className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-center mt-2`}>
+        <Text
+          className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-center mt-2`}
+        >
           Choose a scenario to practice
         </Text>
 
         <Pressable
           className={`mt-4 border rounded-xl2 px-4 py-3 flex-row items-center justify-between ${
-            isDark ? "border-orange-400/60 bg-card" : "border-orange-300 bg-white"
+            isDark
+              ? "border-orange-400/60 bg-card"
+              : "border-orange-300 bg-white"
           }`}
           onPress={() => router.push("/(tabs)/history")}
         >
           <View className="flex-row items-center">
             <Text className="text-2xl">🔥</Text>
             <View className="ml-2">
-              <Text className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}>
+              <Text
+                className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}
+              >
                 Progress
               </Text>
-              <Text className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-xs`}>
+              <Text
+                className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-xs`}
+              >
                 View your history
               </Text>
             </View>
           </View>
-          <Text className={`${isDark ? "text-primary" : "text-[#4F5FE8]"} font-bold`}>
+          <Text
+            className={`${isDark ? "text-primary" : "text-[#4F5FE8]"} font-bold`}
+          >
             View Progress ›
           </Text>
         </Pressable>
@@ -106,11 +127,15 @@ export default function HomeScreen() {
               scenario={item}
               onPress={() =>
                 router.push({
-                  pathname: "/chatbot",
+                  pathname: "/scenario-details",
                   params: {
                     scenarioId: String(item.id),
                     title: item.title,
                     description: item.description,
+                    detailedDescription: item.detailedDescription,
+                    durationMin: item.durationMin,
+                    difficulty: item.difficulty,
+                    emoji: item.emoji,
                   },
                 })
               }
