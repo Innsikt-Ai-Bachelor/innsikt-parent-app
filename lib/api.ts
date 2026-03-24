@@ -25,7 +25,7 @@ export type SessionDetail = {
   scenarioId?: number;
   title: string;
   savedAt: string;
-  messages: { role: string; content: string }[];
+  messages: ChatMessage[];
   feedback?: FeedbackResult;
 };
 
