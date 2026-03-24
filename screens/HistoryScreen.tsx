@@ -222,7 +222,9 @@ export default function HistoryScreen() {
             >
               <View
                 className="h-2 rounded-full bg-emerald-300"
-                style={{ width: `${stats.avgScore ?? 0}%` }}
+                style={{
+                  width: `${Math.min(100, Math.max(0, stats.avgScore ?? 0))}%`,
+                }}
               />
             </View>
           </View>
