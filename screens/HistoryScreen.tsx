@@ -67,7 +67,11 @@ export default function HistoryScreen() {
     const weekCount = sessions.filter((s) => new Date(s.savedAt) >= weekAgo).length;
     const weeklyTarget = 3;
 
-    const last3 = sessions.slice(0, 3).filter((s) => s.totalScore !== undefined);
+    const scoredSessions = sessions.filter((s) => s.totalScore !== undefined);
+    const last3 = scoredSessions
+      .slice()
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+      .slice(0, 3);
     const avgScore = last3.length
       ? last3.reduce((sum, s) => sum + (s.totalScore ?? 0), 0) / last3.length
       : null;
