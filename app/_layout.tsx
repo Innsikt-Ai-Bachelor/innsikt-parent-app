@@ -1,9 +1,9 @@
-import "../global.css";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
+import "../global.css";
 
 export default function RootLayout() {
   const { setColorScheme } = useColorScheme();
@@ -28,6 +28,7 @@ export default function RootLayout() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ header: () => null }} />
       <Stack.Screen name="login" options={{ header: () => null }} />
+      <Stack.Screen name="scenario-details" options={{ header: () => null }} />
       <Stack.Screen name="chatbot" options={{ header: () => null }} />
       <Stack.Screen name="feedback" options={{ header: () => null }} />
       <Stack.Screen name="index" options={{ header: () => null }} />

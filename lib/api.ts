@@ -1,3 +1,5 @@
+import Constants from "expo-constants";
+import { router } from "expo-router";
 import { Platform } from "react-native";
 import { getJson, removeKeys, setJson } from "./storage";
 
@@ -19,6 +21,7 @@ export type Scenario = {
   id: number;
   title: string;
   description: string;
+  detailedDescription?: string;
   durationMin: string;
   difficulty: "Easy" | "Moderate" | "Challenging";
   emoji?: string;
@@ -56,11 +59,52 @@ export type FeedbackResult = {
   negative_feedback: string[];
 };
 
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (Platform.OS === "android"
-    ? "http://34.204.44.206:8000"
-    : "http://localhost:8000");
+function resolveBaseUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+  if (envUrl) {
+    return envUrl;
+  }
+
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    (Constants as { manifest?: { debuggerHost?: string } }).manifest
+      ?.debuggerHost;
+  const host = hostUri?.split(":")[0];
+  if (host) {
+    return `http://${host}:8000`;
+  }
+
+  return Platform.OS === "android"
+    ? "http://10.0.2.2:8000"
+    : "http://localhost:8000";
+}
+
+const BASE_URL = resolveBaseUrl();
+
+const REQUEST_TIMEOUT_MS = 25000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(
+        `Request timed out after ${Math.round(timeoutMs / 1000)}s. ` +
+          `Kontroller at backend kjører og at mobilen når ${BASE_URL}.`,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 async function getToken(): Promise<string | null> {
   return getJson<string>("access_token");
@@ -74,9 +118,38 @@ async function clearToken(): Promise<void> {
   await removeKeys(["access_token", "user"]);
 }
 
+async function forceLogoutToLogin(): Promise<void> {
+  await clearToken();
+  try {
+    router.replace("/login");
+  } catch {
+    // Ignore navigation failures (e.g., router not ready yet).
+  }
+}
+
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Økten er utløpt. Vennligst logg inn igjen.");
+    this.name = "UnauthorizedError";
+  }
+}
+
+function isUnauthorizedStatus(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
+async function handleUnauthorizedResponse(res: Response): Promise<void> {
+  if (!isUnauthorizedStatus(res.status)) return;
+  await forceLogoutToLogin();
+  throw new UnauthorizedError();
+}
+
 async function authHeaders(): Promise<{ Authorization: string }> {
   const token = await getToken();
-  if (!token) throw new Error("Not authenticated");
+  if (!token) {
+    await forceLogoutToLogin();
+    throw new Error("Not authenticated");
+  }
   return { Authorization: `Bearer ${token}` };
 }
 
@@ -97,21 +170,85 @@ function mapApiUser(data: unknown, fallback: Partial<User> = {}): User {
   };
 }
 
+function normalizeDetailedDescription(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const text = value.trim();
+    return text || undefined;
+  }
+
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  const candidateKeys = ["text", "description", "detail", "content"];
+  for (const key of candidateKeys) {
+    const candidate = record[key];
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  const joined = Object.values(record)
+    .filter(
+      (entry): entry is string => typeof entry === "string" && !!entry.trim(),
+    )
+    .join("\n\n")
+    .trim();
+
+  return joined || undefined;
+}
+
 export const api = {
   async authenticate(username: string, password: string): Promise<User> {
-    const res = await fetch(`${BASE_URL}/login`, {
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedUsername || !trimmedPassword) {
+      throw new Error("Fyll inn brukernavn og passord.");
+    }
+
+    const res = await fetchWithTimeout(`${BASE_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({
+        username: trimmedUsername,
+        password: trimmedPassword,
+      }),
     });
-    if (!res.ok) throw new Error("Invalid credentials");
-    const data = await res.json();
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      let message = "Feil brukernavn eller passord.";
+
+      if (res.status >= 500) {
+        message =
+          "Innlogging feilet på grunn av en serverfeil. Prøv igjen senere.";
+      } else if (res.status === 429) {
+        message = "For mange innloggingsforsøk. Vent litt før du prøver igjen.";
+      } else if (res.status !== 400 && res.status !== 401) {
+        // Unexpected 4xx (e.g. 403, 404) – default covers 400/401 (wrong credentials)
+        message = "Innlogging feilet. Vennligst prøv igjen.";
+      }
+
+      if (txt) {
+        console.warn("Login request failed:", res.status, txt);
+      }
+
+      throw new Error(message);
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!data?.access_token || typeof data.access_token !== "string") {
+      throw new Error("Innlogging feilet: mangler access token fra backend.");
+    }
+
     await saveToken(data.access_token);
     const user = mapApiUser(data.user ?? data, {
       id: 0,
-      username,
-      name: username,
-      email: username,
+      username: trimmedUsername,
+      name: trimmedUsername,
+      email: trimmedUsername,
     });
     await setJson("user", user);
     return user;
@@ -122,12 +259,33 @@ export const api = {
     password: string,
     email: string,
   ): Promise<void> {
-    const res = await fetch(`${BASE_URL}/register`, {
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedUsername || !trimmedPassword || !trimmedEmail) {
+      throw new Error("Fyll inn brukernavn, passord og e-post.");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      throw new Error("Ugyldig e-postadresse.");
+    }
+
+    const res = await fetchWithTimeout(`${BASE_URL}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, email }),
+      body: JSON.stringify({
+        username: trimmedUsername,
+        password: trimmedPassword,
+        email: trimmedEmail,
+      }),
     });
-    if (!res.ok) throw new Error("Registration failed");
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(txt || "Registrering feilet.");
+    }
   },
 
   async getCurrentUser(): Promise<User | null> {
@@ -149,6 +307,8 @@ export const api = {
       },
     );
 
+    await handleUnauthorizedResponse(res);
+
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       throw new Error(`Failed to update profile (${res.status}): ${txt}`);
@@ -169,11 +329,28 @@ export const api = {
     const headers = await authHeaders();
     const res = await fetch(`${BASE_URL}/scenarios/`, { headers });
 
+    await handleUnauthorizedResponse(res);
+
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       throw new Error(`Failed to fetch scenarios (${res.status}): ${txt}`);
     }
-    return res.json();
+    const data = (await res.json()) as Array<
+      Scenario & {
+        "detailed-description"?: unknown;
+        detailed_description?: unknown;
+        detailedDescription?: unknown;
+      }
+    >;
+
+    return data.map((scenario) => ({
+      ...scenario,
+      detailedDescription: normalizeDetailedDescription(
+        scenario.detailedDescription ??
+          scenario["detailed-description"] ??
+          scenario.detailed_description,
+      ),
+    }));
   },
 
   async newSessionId(scenarioId: number, title: string): Promise<string> {
@@ -183,6 +360,9 @@ export const api = {
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ scenario_id: scenarioId, title }),
     });
+
+    await handleUnauthorizedResponse(res);
+
     if (!res.ok) throw new Error("Failed to start session");
     const data = await res.json();
     return data.session_id;
@@ -195,6 +375,8 @@ export const api = {
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, message }),
     });
+
+    await handleUnauthorizedResponse(res);
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
@@ -214,6 +396,9 @@ export const api = {
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId }),
     });
+
+    await handleUnauthorizedResponse(res);
+
     if (!res.ok) throw new Error("Failed to finish session");
     const data: FeedbackResult = await res.json();
     await setJson(`feedback:${sessionId}`, data);
@@ -223,6 +408,9 @@ export const api = {
   async getSessions(): Promise<SessionSummary[]> {
     const headers = await authHeaders();
     const res = await fetch(`${BASE_URL}/chat/sessions`, { headers });
+
+    await handleUnauthorizedResponse(res);
+
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const data = await res.json();
     return data.map(

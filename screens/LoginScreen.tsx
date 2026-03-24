@@ -16,6 +16,7 @@ export default function LoginScreen({ onSuccess }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputStyle = {
     backgroundColor: isDark ? "#0B1327" : "#F9FAFF",
@@ -24,6 +25,8 @@ export default function LoginScreen({ onSuccess }: Props) {
   };
 
   const handleLogin = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await api.authenticate(username, password);
       if (onSuccess) {
@@ -31,16 +34,23 @@ export default function LoginScreen({ onSuccess }: Props) {
       } else {
         router.replace("/(tabs)");
       }
-    } catch {
-      setError("Feil brukernavn eller passord.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Feil brukernavn eller passord.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRegister = async () => {
+    if (isSubmitting) return;
     if (!username || !email || !password) {
       setError("Fyll ut alle feltene.");
       return;
     }
+
+    setIsSubmitting(true);
     try {
       await api.register(username, password, email);
       await api.authenticate(username, password);
@@ -49,8 +59,14 @@ export default function LoginScreen({ onSuccess }: Props) {
       } else {
         router.replace("/(tabs)");
       }
-    } catch {
-      setError("Registrering feilet. Prøv et annet brukernavn.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registrering feilet. Prøv et annet brukernavn.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -63,14 +79,19 @@ export default function LoginScreen({ onSuccess }: Props) {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`} edges={["top"]}>
+    <SafeAreaView
+      className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`}
+      edges={["top"]}
+    >
       <SphereBackground />
       <View className="flex-1 items-center justify-center px-6">
         <View
           className="w-full max-w-md rounded-xl2 p-5 border"
           style={{
             backgroundColor: isDark ? "#111A2E" : "#FFFFFF",
-            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.18)",
+            borderColor: isDark
+              ? "rgba(255,255,255,0.08)"
+              : "rgba(79,95,232,0.18)",
           }}
         >
           <Text
@@ -80,7 +101,9 @@ export default function LoginScreen({ onSuccess }: Props) {
             {isRegistering ? "Opprett konto" : "Logg inn"}
           </Text>
 
-          {!!error && <Text className="text-warning mt-3 text-center">{error}</Text>}
+          {!!error && (
+            <Text className="text-warning mt-3 text-center">{error}</Text>
+          )}
 
           <TextInput
             className="mt-4 border rounded-xl px-4 py-3 font-semibold"
@@ -89,7 +112,10 @@ export default function LoginScreen({ onSuccess }: Props) {
             placeholderTextColor={isDark ? "#9AA6C0" : "#8B94A8"}
             autoCapitalize="none"
             value={username}
-            onChangeText={(t) => { setUsername(t); if (error) setError(""); }}
+            onChangeText={(t) => {
+              setUsername(t);
+              if (error) setError("");
+            }}
           />
 
           {isRegistering && (
@@ -101,7 +127,10 @@ export default function LoginScreen({ onSuccess }: Props) {
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
-              onChangeText={(t) => { setEmail(t); if (error) setError(""); }}
+              onChangeText={(t) => {
+                setEmail(t);
+                if (error) setError("");
+              }}
             />
           )}
 
@@ -113,16 +142,24 @@ export default function LoginScreen({ onSuccess }: Props) {
             secureTextEntry
             autoCapitalize="none"
             value={password}
-            onChangeText={(t) => { setPassword(t); if (error) setError(""); }}
+            onChangeText={(t) => {
+              setPassword(t);
+              if (error) setError("");
+            }}
             onSubmitEditing={isRegistering ? handleRegister : handleLogin}
           />
 
           <Pressable
             onPress={isRegistering ? handleRegister : handleLogin}
             className="mt-5 bg-primary rounded-xl py-3 items-center"
+            disabled={isSubmitting}
           >
             <Text className="text-white font-extrabold text-lg">
-              {isRegistering ? "Registrer" : "Logg inn"}
+              {isSubmitting
+                ? "Vennligst vent..."
+                : isRegistering
+                  ? "Registrer"
+                  : "Logg inn"}
             </Text>
           </Pressable>
 
