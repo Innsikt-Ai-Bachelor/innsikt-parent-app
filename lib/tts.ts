@@ -1,0 +1,52 @@
+import * as FileSystem from "expo-file-system/legacy";
+import { Audio } from "expo-av";
+import { Platform } from "react-native";
+
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ??
+  (Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000");
+
+export async function speakText(text: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/tts/speak`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`TTS failed (${res.status}): ${body}`);
+  }
+
+  if (Platform.OS === "web") {
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new window.Audio(url);
+    audio.play();
+    audio.onended = () => URL.revokeObjectURL(url);
+    return;
+  }
+
+  // Native: convert arraybuffer → base64 → temp file → expo-av
+  const buffer = await res.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+
+  const tmpUri = FileSystem.cacheDirectory + `tts-${Date.now()}.mp3`;
+  await FileSystem.writeAsStringAsync(tmpUri, base64, {
+    encoding: "base64",
+  });
+
+  await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+  const { sound } = await Audio.Sound.createAsync({ uri: tmpUri });
+  await sound.playAsync();
+
+  sound.setOnPlaybackStatusUpdate((status) => {
+    if (status.isLoaded && status.didJustFinish) {
+      sound.unloadAsync();
+    }
+  });
+}

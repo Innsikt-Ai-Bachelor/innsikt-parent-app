@@ -12,9 +12,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Ionicons } from "@expo/vector-icons";
 import { ChatBubble } from "@/components/ui/ChatBubble";
 import { SphereBackground } from "@/components/ui/SphereBackground";
 import { api } from "@/lib/api";
+import { useTts } from "@/hooks/useTts";
 
 type ChatMessage = { id: string; role: "parent" | "child"; text: string };
 
@@ -31,6 +33,8 @@ export default function ChatScreen() {
     ? String(params.description)
     : "";
   const scenarioId = params.scenarioId ? Number(params.scenarioId) : 1;
+
+  const { ttsEnabled, toggle: toggleTts, speak } = useTts();
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -72,6 +76,7 @@ export default function ChatScreen() {
         text: reply,
       };
       setMessages((prev) => [...prev, childMsg]);
+      speak(reply);
 
       requestAnimationFrame(() =>
         listRef.current?.scrollToEnd({ animated: true }),
@@ -140,7 +145,13 @@ export default function ChatScreen() {
             </Text>
           </View>
 
-          <View className="w-8" />
+          <Pressable onPress={toggleTts} hitSlop={12} className="w-8 items-center">
+            <Ionicons
+              name={ttsEnabled ? "volume-high" : "volume-mute"}
+              size={22}
+              color={isDark ? "#6D7CFF" : "#4F5FE8"}
+            />
+          </Pressable>
         </View>
 
         <FlatList
