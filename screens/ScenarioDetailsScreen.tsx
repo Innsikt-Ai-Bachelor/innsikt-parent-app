@@ -40,11 +40,14 @@ export default function ScenarioDetailsScreen() {
   const handleProceed = () => {
     router.push({
       pathname: "/chatbot",
-      params: {
-        scenarioId,
-        title,
-        description,
-      },
+      params: { scenarioId, title, description },
+    });
+  };
+
+  const handleVoice = () => {
+    router.push({
+      pathname: "/voice",
+      params: { scenarioId, title, description },
     });
   };
 
@@ -145,12 +148,20 @@ export default function ScenarioDetailsScreen() {
             </Text>
           </Pressable>
 
-          <Pressable
-            className="mt-3 bg-primary rounded-xl2 py-3 items-center"
-            onPress={handleProceed}
-          >
-            <Text className="text-white font-extrabold">Proceed to chat</Text>
-          </Pressable>
+          <View className="mt-3 flex-row gap-3">
+            <Pressable
+              className="flex-1 bg-primary rounded-xl2 py-3 items-center"
+              onPress={handleProceed}
+            >
+              <Text className="text-white font-extrabold">💬 Chat</Text>
+            </Pressable>
+            <Pressable
+              className="flex-1 bg-primary rounded-xl2 py-3 items-center"
+              onPress={handleVoice}
+            >
+              <Text className="text-white font-extrabold">🎙️ Snakk</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </SafeAreaView>
