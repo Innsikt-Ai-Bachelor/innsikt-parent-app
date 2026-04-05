@@ -1,10 +1,17 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { Audio } from "expo-av";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000");
+function getBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (Platform.OS === "android") return "http://10.0.2.2:8000";
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host) return `http://${host}:8000`;
+  return "http://localhost:8000";
+}
+
+const BASE_URL = getBaseUrl();
 
 export async function speakText(text: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/tts/speak`, {

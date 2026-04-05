@@ -1,5 +1,21 @@
 import { Pressable, Text, View } from "react-native";
 import { useColorScheme } from "nativewind";
+import { Ionicons } from "@expo/vector-icons";
+
+const EMOJI_TO_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+  "🌙": "moon",
+  "📚": "book",
+  "🌅": "sunny",
+  "😤": "flame",
+  "🏃": "walk",
+  "💬": "chatbubble",
+  "🎮": "game-controller",
+  "🍽️": "restaurant",
+  "💤": "bed",
+  "😴": "bed",
+  "🎒": "backpack",
+  "📱": "phone-portrait",
+};
 
 type Difficulty = "Easy" | "Moderate" | "Challenging";
 
@@ -43,7 +59,14 @@ export function ScenarioCard({
       }`}
     >
       <View className="flex-row items-start">
-        {scenario.emoji ? <Text className="text-xl mr-2">{scenario.emoji}</Text> : null}
+        {scenario.emoji ? (
+          <Ionicons
+            name={EMOJI_TO_ICON[scenario.emoji] ?? "ellipse-outline"}
+            size={24}
+            color="#6D7CFF"
+            style={{ marginRight: 8, marginTop: 2 }}
+          />
+        ) : null}
 
         <View className="flex-1">
           <Text className={`text-base font-extrabold ${isDark ? "text-text" : "text-[#131A2A]"}`}>
@@ -54,9 +77,12 @@ export function ScenarioCard({
           </Text>
 
           <View className="mt-3 flex-row items-center gap-2">
-            <Text className={`text-xs font-semibold ${isDark ? "text-muted" : "text-[#6B7285]"}`}>
-              ⏱ {duration}
-            </Text>
+            <View className="flex-row items-center gap-1">
+              <Ionicons name="time-outline" size={12} color={isDark ? "#9AA6C0" : "#6B7285"} />
+              <Text className={`text-xs font-semibold ${isDark ? "text-muted" : "text-[#6B7285]"}`}>
+                {duration}
+              </Text>
+            </View>
             <View className={`rounded-full px-2.5 py-1 ${chip}`}>
               <Text className="text-xs font-extrabold">{difficulty}</Text>
             </View>

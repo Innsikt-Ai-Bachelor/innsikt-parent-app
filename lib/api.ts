@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { getJson, removeKeys, setJson } from "./storage";
 
 export type User = {
@@ -58,11 +59,15 @@ export type FeedbackResult = {
   negative_feedback: string[];
 };
 
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (Platform.OS === "android"
-    ? "http://34.204.44.206:8000"
-    : "http://localhost:8000");
+function getBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (Platform.OS === "android") return "http://10.0.2.2:8000";
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host) return `http://${host}:8000`;
+  return "http://localhost:8000";
+}
+
+const BASE_URL = getBaseUrl();
 
 const REQUEST_TIMEOUT_MS = 25000;
 

@@ -181,10 +181,11 @@ export default function ChatScreen() {
               <TextInput
                 value={input}
                 onChangeText={setInput}
-                placeholder="Type your response…"
+                placeholder="Skriv svaret ditt…"
                 placeholderTextColor={isDark ? "#9AA6C0" : "#8B94A8"}
                 className="flex-1 font-semibold min-h-[36px]"
                 style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
+                keyboardType="default"
                 multiline
               />
               <Pressable

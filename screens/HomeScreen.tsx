@@ -96,7 +96,7 @@ export default function HomeScreen() {
           onPress={() => router.push("/(tabs)/history")}
         >
           <View className="flex-row items-center">
-            <Text className="text-2xl">🔥</Text>
+            <Ionicons name="stats-chart" size={22} color="#F97316" />
             <View className="ml-2">
               <Text
                 className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}
