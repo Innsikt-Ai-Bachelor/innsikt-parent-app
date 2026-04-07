@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "nativewind";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Canvas, useFrame } from "@react-three/fiber/native";
+import { Canvas, useFrame, useThree } from "@react-three/fiber/native";
 import * as THREE from "three";
 import { GLTFLoader } from "three-stdlib";
 import { Audio } from "expo-av";
@@ -73,12 +73,15 @@ function AvatarModel({ scene, voiceState }: { scene: THREE.Group; voiceState: Vo
   const groupRef = useRef<THREE.Group>(null);
   const t = useRef(0);
 
-  const box = new THREE.Box3().setFromObject(scene);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z);
-  const s = maxDim > 0.001 ? 5 / maxDim : 1;
-  const baseY = -center.y * s - 2.2;
+  const { s, baseY } = useMemo(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const s = maxDim > 0.001 ? 3 / maxDim : 1;
+    const baseY = -center.y * s - 1.2;
+    return { s, baseY };
+  }, [scene]);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
@@ -108,6 +111,14 @@ function AvatarModel({ scene, voiceState }: { scene: THREE.Group; voiceState: Vo
   );
 }
 
+function CameraLookAt({ target }: { target: [number, number, number] }) {
+  const { camera } = useThree();
+  useEffect(() => {
+    camera.lookAt(...target);
+  }, [camera, target]);
+  return null;
+}
+
 function AvatarCanvas({ voiceState }: { voiceState: VoiceState }) {
   const [scene, setScene] = useState<THREE.Group | null>(null);
 
@@ -116,7 +127,8 @@ function AvatarCanvas({ voiceState }: { voiceState: VoiceState }) {
   }, []);
 
   return (
-    <Canvas style={{ flex: 1 }} camera={{ position: [0, -0.4, 1.4], fov: 28 }}>
+    <Canvas style={{ flex: 1 }} camera={{ position: [0, 0.1, 1.9], fov: 30 }}>
+      <CameraLookAt target={[0, 0.1, 0]} />
       <ambientLight intensity={1.5} />
       <directionalLight position={[2, 4, 5]} intensity={1} />
       <directionalLight position={[-2, 2, -2]} intensity={0.3} />
@@ -162,6 +174,7 @@ export default function VoiceScreen() {
   };
 
   const startRecording = async () => {
+    if (!sessionId) return;
     const { granted } = await Audio.requestPermissionsAsync();
     if (!granted) return;
     await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
@@ -173,7 +186,14 @@ export default function VoiceScreen() {
   };
 
   const stopRecordingAndProcess = async () => {
-    if (!recordingRef.current || !sessionId) return;
+    if (!recordingRef.current) return;
+    if (!sessionId) {
+      await recordingRef.current.stopAndUnloadAsync().catch(() => {});
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      recordingRef.current = null;
+      setVoiceState("IDLE");
+      return;
+    }
     setVoiceState("THINKING");
     await recordingRef.current.stopAndUnloadAsync();
     await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
@@ -215,7 +235,7 @@ export default function VoiceScreen() {
   const micEnabled = voiceState === "IDLE" || voiceState === "LISTENING";
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`} edges={["top"]}>
+    <SafeAreaView className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`} edges={["top", "bottom"]}>
       <SphereBackground />
 
       <View className="px-4 pt-1 pb-2 flex-row items-center">
@@ -239,7 +259,7 @@ export default function VoiceScreen() {
         <AvatarCanvas voiceState={voiceState} />
       </View>
 
-      <View className="pb-10 px-6 items-center gap-4">
+      <View className="pb-10 px-6 items-center gap-4" style={{ zIndex: 10 }}>
         <Text className="text-sm font-semibold" style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}>
           {STATUS_LABELS[voiceState]}
         </Text>

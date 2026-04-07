@@ -14,11 +14,14 @@ function getBaseUrl(): string {
 const BASE_URL = getBaseUrl();
 
 export async function speakText(text: string): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
   const res = await fetch(`${BASE_URL}/tts/speak`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`TTS failed (${res.status}): ${body}`);

@@ -19,10 +19,13 @@ export async function transcribeAudio(uri: string): Promise<string> {
     name: "recording.m4a",
   } as unknown as Blob);
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
   const res = await fetch(`${BASE_URL}/stt/transcribe`, {
     method: "POST",
     body: formData,
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
