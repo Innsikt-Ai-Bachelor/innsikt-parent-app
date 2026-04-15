@@ -7,9 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "innsiktforeldreapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.innsikt-foreldre-app"
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
