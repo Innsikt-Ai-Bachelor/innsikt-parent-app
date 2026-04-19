@@ -1,5 +1,4 @@
 import { router } from "expo-router";
-import { Platform } from "react-native";
 import { getJson, removeKeys, setJson } from "./storage";
 
 export type User = {
@@ -58,11 +57,11 @@ export type FeedbackResult = {
   negative_feedback: string[];
 };
 
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
+const BASE_URL = "http://10.0.2.2:8000"; // Android emulator localhost; for iOS/simulators, use "localhost:8000"
+/* process.env.EXPO_PUBLIC_API_BASE_URL ??
   (Platform.OS === "android"
     ? "http://34.204.44.206:8000"
-    : "http://localhost:8000");
+    : "http://localhost:8000"); */
 
 const REQUEST_TIMEOUT_MS = 25000;
 
@@ -318,13 +317,11 @@ export const api = {
       const txt = await res.text().catch(() => "");
       throw new Error(`Failed to fetch scenarios (${res.status}): ${txt}`);
     }
-    const data = (await res.json()) as Array<
-      Scenario & {
-        "detailed-description"?: unknown;
-        detailed_description?: unknown;
-        detailedDescription?: unknown;
-      }
-    >;
+    const data = (await res.json()) as (Scenario & {
+      "detailed-description"?: unknown;
+      detailed_description?: unknown;
+      detailedDescription?: unknown;
+    })[];
 
     return data.map((scenario) => ({
       ...scenario,

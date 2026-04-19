@@ -1,9 +1,16 @@
 import { SphereBackground } from "@/components/ui/SphereBackground";
 import { FeedbackResult } from "@/lib/api";
+import { motivationalMessage, sessionXpGain } from "@/lib/gamification";
 import { getJson } from "@/lib/storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FeedbackScreen() {
@@ -55,8 +62,25 @@ export default function FeedbackScreen() {
           </View>
           <View className="w-8" />
         </View>
-        <Text className="text-text text-2xl font-extrabold text-center">Great Work!</Text>
-        <Text className="text-muted text-center mt-1">Here&apos;s your session summary</Text>
+        <Text className="text-text text-2xl font-extrabold text-center">
+          Great Work!
+        </Text>
+        <Text className="text-muted text-center mt-1">
+          Here&apos;s your session summary
+        </Text>
+
+        {feedback && (
+          <View className="mt-4 bg-card border border-border rounded-xl2 p-4 items-center">
+            <Text className="text-2xl">🎉</Text>
+            <Text className="text-warning text-3xl font-extrabold mt-1">
+              +{sessionXpGain(feedback.total_score)} XP
+            </Text>
+            <Text className="text-muted text-xs mt-1">Earned this session</Text>
+            <Text className="text-text font-semibold text-center mt-3 leading-6">
+              {motivationalMessage(feedback.total_score)}
+            </Text>
+          </View>
+        )}
 
         {loading ? (
           <View className="py-12 items-center">
@@ -65,7 +89,9 @@ export default function FeedbackScreen() {
         ) : (
           <>
             <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
-              <Text className="text-primary font-bold text-center">{title}</Text>
+              <Text className="text-primary font-bold text-center">
+                {title}
+              </Text>
 
               {feedback && (
                 <View className="mt-3 items-center">
@@ -88,9 +114,13 @@ export default function FeedbackScreen() {
                       <Text className="text-primary text-xl font-extrabold">
                         {c.score}/{c.max_score}
                       </Text>
-                      <Text className="text-muted text-xs mt-1 capitalize">{c.name}</Text>
+                      <Text className="text-muted text-xs mt-1 capitalize">
+                        {c.name}
+                      </Text>
                       {!!c.reason && (
-                        <Text className="text-muted text-xs mt-1">{c.reason}</Text>
+                        <Text className="text-muted text-xs mt-1">
+                          {c.reason}
+                        </Text>
                       )}
                     </View>
                   ))}
@@ -100,12 +130,16 @@ export default function FeedbackScreen() {
 
             {feedback && feedback.positive_feedback.length > 0 && (
               <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
-                <Text className="text-text font-extrabold text-base">What Went Well</Text>
+                <Text className="text-text font-extrabold text-base">
+                  What Went Well
+                </Text>
                 <View className="mt-2 gap-2">
                   {feedback.positive_feedback.map((line, i) => (
                     <View key={i} className="flex-row gap-2">
                       <Text className="text-primary">•</Text>
-                      <Text className="text-muted flex-1 leading-6">{line}</Text>
+                      <Text className="text-muted flex-1 leading-6">
+                        {line}
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -114,12 +148,16 @@ export default function FeedbackScreen() {
 
             {feedback && feedback.negative_feedback.length > 0 && (
               <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
-                <Text className="text-text font-extrabold text-base">What to Improve</Text>
+                <Text className="text-text font-extrabold text-base">
+                  What to Improve
+                </Text>
                 <View className="mt-2 gap-2">
                   {feedback.negative_feedback.map((line, i) => (
                     <View key={i} className="flex-row gap-2">
                       <Text className="text-red-400">•</Text>
-                      <Text className="text-muted flex-1 leading-6">{line}</Text>
+                      <Text className="text-muted flex-1 leading-6">
+                        {line}
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -128,7 +166,9 @@ export default function FeedbackScreen() {
 
             {!feedback && (
               <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
-                <Text className="text-muted text-center">No feedback available.</Text>
+                <Text className="text-muted text-center">
+                  No feedback available.
+                </Text>
               </View>
             )}
           </>
