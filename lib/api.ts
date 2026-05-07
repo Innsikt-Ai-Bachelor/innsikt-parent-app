@@ -1,4 +1,9 @@
 import { router } from "expo-router";
+<<<<<<< HEAD
+=======
+import { Platform } from "react-native";
+import Constants from "expo-constants";
+>>>>>>> 28b6fee16dc8ea92a57fdd3492267aea476a8f8d
 import { getJson, removeKeys, setJson } from "./storage";
 
 export type User = {
@@ -57,11 +62,23 @@ export type FeedbackResult = {
   negative_feedback: string[];
 };
 
+<<<<<<< HEAD
 const BASE_URL = "http://10.0.2.2:8000"; // Android emulator localhost; for iOS/simulators, use "localhost:8000"
 /* process.env.EXPO_PUBLIC_API_BASE_URL ??
   (Platform.OS === "android"
     ? "http://34.204.44.206:8000"
     : "http://localhost:8000"); */
+=======
+function getBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (Platform.OS === "android") return "http://10.0.2.2:8000";
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host) return `http://${host}:8000`;
+  return "http://localhost:8000";
+}
+
+const BASE_URL = getBaseUrl();
+>>>>>>> 28b6fee16dc8ea92a57fdd3492267aea476a8f8d
 
 const REQUEST_TIMEOUT_MS = 25000;
 
@@ -276,7 +293,7 @@ export const api = {
 
   async updateUserProfile(payload: UpdateUserProfilePayload): Promise<User> {
     const headers = await authHeaders();
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${BASE_URL}/users/${encodeURIComponent(payload.username)}`,
       {
         method: "PUT",
@@ -309,7 +326,7 @@ export const api = {
 
   async getScenarios(): Promise<Scenario[]> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/scenarios/`, { headers });
+    const res = await fetchWithTimeout(`${BASE_URL}/scenarios/`, { headers });
 
     await handleUnauthorizedResponse(res);
 
@@ -335,7 +352,7 @@ export const api = {
 
   async newSessionId(scenarioId: number, title: string): Promise<string> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/chat/session`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/session`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ scenario_id: scenarioId, title }),
@@ -350,7 +367,7 @@ export const api = {
 
   async sendMessage(sessionId: string, message: string): Promise<string> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/chat/message`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/message`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, message }),
@@ -371,7 +388,7 @@ export const api = {
 
   async generateFeedback(sessionId: string): Promise<FeedbackResult> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/chat/finish`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/finish`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId }),
@@ -387,7 +404,7 @@ export const api = {
 
   async getSessions(): Promise<SessionSummary[]> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/chat/sessions`, { headers });
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/sessions`, { headers });
 
     await handleUnauthorizedResponse(res);
 
@@ -412,7 +429,7 @@ export const api = {
 
   async getSessionDetail(sessionId: string): Promise<SessionDetail> {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/session/${sessionId}`, {
       headers,
     });
     if (!res.ok) throw new Error("Failed to fetch session detail");

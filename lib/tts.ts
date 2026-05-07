@@ -1,17 +1,27 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { Audio } from "expo-av";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000");
+function getBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (Platform.OS === "android") return "http://10.0.2.2:8000";
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host) return `http://${host}:8000`;
+  return "http://localhost:8000";
+}
+
+const BASE_URL = getBaseUrl();
 
 export async function speakText(text: string): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
   const res = await fetch(`${BASE_URL}/tts/speak`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`TTS failed (${res.status}): ${body}`);
@@ -42,11 +52,14 @@ export async function speakText(text: string): Promise<void> {
 
   await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
   const { sound } = await Audio.Sound.createAsync({ uri: tmpUri });
-  await sound.playAsync();
 
-  sound.setOnPlaybackStatusUpdate((status) => {
-    if (status.isLoaded && status.didJustFinish) {
-      sound.unloadAsync();
-    }
+  await new Promise<void>((resolve) => {
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        sound.unloadAsync();
+        resolve();
+      }
+    });
+    sound.playAsync();
   });
 }

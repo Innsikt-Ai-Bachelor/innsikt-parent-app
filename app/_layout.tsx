@@ -31,6 +31,7 @@ export default function RootLayout() {
       <Stack.Screen name="scenario-details" options={{ header: () => null }} />
       <Stack.Screen name="chatbot" options={{ header: () => null }} />
       <Stack.Screen name="feedback" options={{ header: () => null }} />
+      <Stack.Screen name="voice" options={{ header: () => null }} />
       <Stack.Screen name="index" options={{ header: () => null }} />
     </Stack>
   );
