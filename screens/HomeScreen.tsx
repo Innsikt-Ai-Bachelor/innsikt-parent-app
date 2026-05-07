@@ -79,12 +79,12 @@ export default function HomeScreen() {
             isDark ? "text-text" : "text-[#131A2A]"
           }`}
         >
-          Practice Makes Progress
+          Øvelse gjør mester
         </Text>
         <Text
           className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-center mt-2`}
         >
-          Choose a scenario to practice
+          Velg et scenario for å øve
         </Text>
 
         <Pressable
@@ -101,19 +101,19 @@ export default function HomeScreen() {
               <Text
                 className={`${isDark ? "text-text" : "text-[#131A2A]"} font-extrabold`}
               >
-                Progress
+                Progresjon
               </Text>
               <Text
                 className={`${isDark ? "text-muted" : "text-[#6B7285]"} text-xs`}
               >
-                View your history
+                Se din historie
               </Text>
             </View>
           </View>
           <Text
             className={`${isDark ? "text-primary" : "text-[#4F5FE8]"} font-bold`}
           >
-            View Progress ›
+            Se progresjon ›
           </Text>
         </Pressable>
 

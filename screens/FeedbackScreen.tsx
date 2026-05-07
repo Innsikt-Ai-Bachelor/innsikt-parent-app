@@ -58,15 +58,15 @@ export default function FeedbackScreen() {
             <Text className="text-primary text-2xl font-extrabold">‹</Text>
           </Pressable>
           <View className="flex-1 items-center">
-            <Text className="text-text font-extrabold">Progress</Text>
+            <Text className="text-text font-extrabold">Progresjon</Text>
           </View>
           <View className="w-8" />
         </View>
         <Text className="text-text text-2xl font-extrabold text-center">
-          Great Work!
+          Flott arbeid!
         </Text>
         <Text className="text-muted text-center mt-1">
-          Here&apos;s your session summary
+          Her er ditt sesjonsammendrag
         </Text>
 
         {feedback && (
@@ -99,7 +99,9 @@ export default function FeedbackScreen() {
                     {feedback.total_score}
                     <Text className="text-muted text-lg"> / 100</Text>
                   </Text>
-                  <Text className="text-muted text-xs mt-1">Total Score</Text>
+                  <Text className="text-muted text-xs mt-1">
+                    Total poengsum
+                  </Text>
                 </View>
               )}
 
