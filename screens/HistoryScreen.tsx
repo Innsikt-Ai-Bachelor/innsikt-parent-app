@@ -90,7 +90,7 @@ export default function HistoryScreen() {
             className="font-extrabold"
             style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
           >
-            Progress
+            Progresjon
           </Text>
         </View>
         <View className="w-8" />
@@ -101,7 +101,7 @@ export default function HistoryScreen() {
           className="text-3xl font-extrabold text-center mt-2"
           style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
         >
-          Progress
+          Progresjon
         </Text>
 
         {/* Level & XP */}
@@ -128,7 +128,7 @@ export default function HistoryScreen() {
                   className="text-xs -mt-1"
                   style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
                 >
-                  {gamification.xpToNextLevel} XP to next level
+                  {gamification.xpToNextLevel} XP til neste nivå
                 </Text>
               </View>
             </View>
@@ -177,15 +177,15 @@ export default function HistoryScreen() {
                 className="text-xs -mt-1"
                 style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
               >
-                Current streak
+                Nåværende streak
               </Text>
             </View>
           </View>
           {gamification.currentStreak > 0 && (
             <Text className="text-emerald-300 font-extrabold mt-3">
               {gamification.currentStreak >= 7
-                ? "You're unstoppable! 🚀"
-                : "Amazing streak! 💪"}
+                ? "Du er uutsatt! 🚀"
+                : "Fantastisk streak! 💪"}
             </Text>
           )}
           <View className="mt-3 flex-row gap-2">
@@ -238,7 +238,7 @@ export default function HistoryScreen() {
               className="mt-1"
               style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
             >
-              Longest Streak
+              Lengste streak
             </Text>
           </View>
           <View
@@ -261,7 +261,7 @@ export default function HistoryScreen() {
               className="mt-1"
               style={{ color: isDark ? "#9AA6C0" : "#6B7285" }}
             >
-              Total Sessions
+              Totale økter
             </Text>
           </View>
         </View>
@@ -286,7 +286,7 @@ export default function HistoryScreen() {
               className="font-semibold"
               style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
             >
-              📅 Weekly Goal
+              📅 Ukemål
             </Text>
             <Text className="text-cyan-300 font-extrabold">
               {Math.min(weeklyTarget, weekCount)} / {weeklyTarget}
@@ -321,12 +321,12 @@ export default function HistoryScreen() {
             className="font-semibold"
             style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
           >
-            Average Score (Last 3 Sessions)
+            Gjennomsnittlig poengsum (Siste 3 økter)
           </Text>
           <View className="mt-3">
             <View className="flex-row items-center justify-between">
               <Text style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}>
-                Total Score
+                Total poengsum
               </Text>
               <Text
                 className="font-extrabold"

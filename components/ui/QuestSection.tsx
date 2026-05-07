@@ -87,7 +87,7 @@ export function QuestSection({ quests }: { quests: Quest[] }) {
         className="font-extrabold text-base mb-2"
         style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
       >
-        Active Quests
+        Aktive oppdrag
       </Text>
       {quests.map((q) => (
         <QuestCard key={q.id} quest={q} isDark={isDark} />

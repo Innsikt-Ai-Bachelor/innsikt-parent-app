@@ -1,5 +1,5 @@
-import { Tabs } from "expo-router";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { Tabs } from "expo-router";
 import { useColorScheme } from "nativewind";
 
 export default function TabLayout() {
@@ -15,7 +15,9 @@ export default function TabLayout() {
         tabBarStyle: {
           display: "none",
           backgroundColor: isDark ? "#0B1220" : "#FFFFFF",
-          borderTopColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(79,95,232,0.18)",
+          borderTopColor: isDark
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(79,95,232,0.18)",
         },
       }}
     >
@@ -31,7 +33,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: "Progress",
+          title: "Progresjon",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={22} name="clock.fill" color={color} />
           ),

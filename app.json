@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.anonymous.innsikt-foreldre-app"
     },
     "android": {
+      "package": "com.anonymous.innsiktforeldreapp",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

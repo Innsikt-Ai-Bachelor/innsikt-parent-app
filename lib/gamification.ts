@@ -248,8 +248,8 @@ export function computeGamification(
     {
       id: "weekly_3",
       emoji: "📅",
-      title: "Practice Makes Progress",
-      description: "Complete 3 sessions this week",
+      title: "Øvelse gjør mester",
+      description: "Fullfør 3 økter denne uken",
       current: Math.min(3, weekCount),
       target: 3,
       xpReward: 50,
@@ -258,8 +258,8 @@ export function computeGamification(
     {
       id: "score_70",
       emoji: "🎯",
-      title: "Aim High",
-      description: "Score 70+ in any session this week",
+      title: "Sikta høyt",
+      description: "Få 70+ poeng i en hvilken som helst økt denne uken",
       current: weekHighScore >= 70 ? 1 : 0,
       target: 1,
       xpReward: 30,
@@ -268,8 +268,8 @@ export function computeGamification(
     {
       id: "total_5",
       emoji: "💎",
-      title: "Building Habits",
-      description: "Complete 5 sessions total",
+      title: "Bygge vaner",
+      description: "Fullfør 5 økter totalt",
       current: Math.min(5, total),
       target: 5,
       xpReward: 75,
