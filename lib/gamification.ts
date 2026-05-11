@@ -1,4 +1,4 @@
-import { FeedbackResult, SessionSummary } from "./api";
+import type { FeedbackResult, SessionSummary } from "./api";
 import { getJson } from "./storage";
 
 export type Badge = {

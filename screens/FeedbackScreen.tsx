@@ -51,26 +51,6 @@ export default function FeedbackScreen() {
     router.replace("/(tabs)");
   };
 
-  const scoreColor = (score: number) => {
-    const s = Math.max(0, Math.min(100, score));
-    const lerp = (a: number, b: number, t: number) =>
-      Math.round(a + (b - a) * t);
-    // rød(248,113,113) → gul(250,204,20) → grønn(74,222,128)
-    const [r, g, b] =
-      s < 70
-        ? [
-            lerp(248, 250, s / 70),
-            lerp(113, 204, s / 70),
-            lerp(113, 20, s / 70),
-          ]
-        : [
-            lerp(250, 74, (s - 70) / 30),
-            lerp(204, 222, (s - 70) / 30),
-            lerp(20, 128, (s - 70) / 30),
-          ];
-    return `rgb(${r},${g},${b})`;
-  };
-
   return (
     <SafeAreaView
       className={`flex-1 ${isDark ? "bg-bg" : "bg-[#F7F8FC]"}`}
@@ -222,13 +202,6 @@ export default function FeedbackScreen() {
               </View>
             )}
 
-            {!feedback && (
-              <View className="mt-4 bg-card border border-border rounded-xl2 p-4">
-                <Text className="text-muted text-center">
-                  No feedback available.
-                </Text>
-              </View>
-            )}
           </>
         )}
 

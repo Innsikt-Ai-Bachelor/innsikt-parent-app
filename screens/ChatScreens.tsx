@@ -101,6 +101,7 @@ export default function ChatScreen() {
     } catch (error) {
       if (error instanceof UnauthorizedError) return;
       console.error(error);
+    } finally {
       setIsEnding(false);
     }
   };
