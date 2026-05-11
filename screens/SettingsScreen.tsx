@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, UnauthorizedError } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useColorScheme } from "nativewind";
@@ -77,6 +77,7 @@ export default function SettingsScreen() {
       await api.logout();
       router.replace("/login");
     } catch (err) {
+      if (err instanceof UnauthorizedError) return;
       console.error("Logout failed:", err);
       Alert.alert("Feil", "Klarte ikke å logge ut. Prøv igjen.");
     }
@@ -127,6 +128,7 @@ export default function SettingsScreen() {
       setIsProfileModalVisible(false);
       Alert.alert("Success", "Your profile has been updated.");
     } catch (err) {
+      if (err instanceof UnauthorizedError) return;
       console.error("Profile update failed:", err);
       Alert.alert(
         "Update failed",

@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Ionicons } from "@expo/vector-icons";
 import { ChatBubble } from "@/components/ui/ChatBubble";
 import { SphereBackground } from "@/components/ui/SphereBackground";
-import { api } from "@/lib/api";
 import { useTts } from "@/hooks/useTts";
+import { api, UnauthorizedError } from "@/lib/api";
+import { Ionicons } from "@expo/vector-icons";
 
 type ChatMessage = { id: string; role: "parent" | "child"; text: string };
 
@@ -82,6 +82,7 @@ export default function ChatScreen() {
         listRef.current?.scrollToEnd({ animated: true }),
       );
     } catch (err) {
+      if (err instanceof UnauthorizedError) return;
       console.error("Failed to send message:", err);
     } finally {
       setIsThinking(false);
@@ -98,7 +99,9 @@ export default function ChatScreen() {
         params: { title: scenarioTitle, sessionId },
       });
     } catch (error) {
+      if (error instanceof UnauthorizedError) return;
       console.error(error);
+    } finally {
       setIsEnding(false);
     }
   };
@@ -145,7 +148,11 @@ export default function ChatScreen() {
             </Text>
           </View>
 
-          <Pressable onPress={toggleTts} hitSlop={12} className="w-8 items-center">
+          <Pressable
+            onPress={toggleTts}
+            hitSlop={12}
+            className="w-8 items-center"
+          >
             <Ionicons
               name={ttsEnabled ? "volume-high" : "volume-mute"}
               size={22}
@@ -187,6 +194,9 @@ export default function ChatScreen() {
                 style={{ color: isDark ? "#EAF0FF" : "#1C2336" }}
                 keyboardType="default"
                 multiline
+                autoCorrect={false}
+                autoComplete="off"
+                underlineColorAndroid="transparent"
               />
               <Pressable
                 onPress={send}

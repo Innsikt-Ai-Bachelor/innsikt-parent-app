@@ -1,6 +1,6 @@
+import Constants from "expo-constants";
 import { router } from "expo-router";
 import { Platform } from "react-native";
-import Constants from "expo-constants";
 import { getJson, removeKeys, setJson } from "./storage";
 
 export type User = {
@@ -60,7 +60,8 @@ export type FeedbackResult = {
 };
 
 function getBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_BASE_URL) return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (process.env.EXPO_PUBLIC_API_BASE_URL)
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
   if (Platform.OS === "android") return "http://10.0.2.2:8000";
   const host = Constants.expoConfig?.hostUri?.split(":")[0];
   if (host) return `http://${host}:8000`;
@@ -323,13 +324,11 @@ export const api = {
       const txt = await res.text().catch(() => "");
       throw new Error(`Failed to fetch scenarios (${res.status}): ${txt}`);
     }
-    const data = (await res.json()) as Array<
-      Scenario & {
-        "detailed-description"?: unknown;
-        detailed_description?: unknown;
-        detailedDescription?: unknown;
-      }
-    >;
+    const data = (await res.json()) as (Scenario & {
+      "detailed-description"?: unknown;
+      detailed_description?: unknown;
+      detailedDescription?: unknown;
+    })[];
 
     return data.map((scenario) => ({
       ...scenario,
@@ -395,7 +394,9 @@ export const api = {
 
   async getSessions(): Promise<SessionSummary[]> {
     const headers = await authHeaders();
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/sessions`, { headers });
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/sessions`, {
+      headers,
+    });
 
     await handleUnauthorizedResponse(res);
 
@@ -420,9 +421,12 @@ export const api = {
 
   async getSessionDetail(sessionId: string): Promise<SessionDetail> {
     const headers = await authHeaders();
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/session/${sessionId}`, {
-      headers,
-    });
+    const res = await fetchWithTimeout(
+      `${BASE_URL}/chat/session/${sessionId}`,
+      {
+        headers,
+      },
+    );
     if (!res.ok) throw new Error("Failed to fetch session detail");
     const s = await res.json();
     return {
